@@ -132,11 +132,6 @@ async function craigslistSearch(title, price){
     console.log('Waiting for images to load...');
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Save HTML for debugging
-    const html = await page.content();
-    fs.writeFileSync('craigslist-debug.html', html);
-    console.log('HTML saved to craigslist-debug.html');
-    
     // Try to find listings with different selectors
     const listings = await page.evaluate(() => {
         const results = [];
