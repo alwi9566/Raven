@@ -1,0 +1,435 @@
+/* Updated to exact Figma specs: 320x540px, Montserrat font, exact color palette, 15px/30px spacing */
+#raven-extension-overlay {
+  /* Removed aggressive CSS reset properties that broke styling */
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 20px !important;
+  z-index: 999999 !important;
+  font-family: "Montserrat", -apple-system, BlinkMacMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  /* Enforcing exact dimensions with isolation */
+  width: 320px !important;
+  height: 540px !important;
+  max-height: 540px !important;
+  min-height: 540px !important;
+  max-width: 320px !important;
+  min-width: 320px !important;
+  background: #1a1a1a !important;
+  border-radius: 16px !important;
+  padding: 20px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  /* Isolation to prevent parent CSS from affecting dimensions */
+  isolation: isolate !important;
+}
+
+/* Removed problematic wildcard reset that was breaking flex layouts */
+#raven-extension-overlay * {
+  font-family: "Montserrat", -apple-system, BlinkMacMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* Removed redundant display overrides */
+
+.raven-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* Reduced margin from 30px to 20px to move nav bar up */
+  margin-bottom: 20px;
+}
+
+/* Replaced text logo styling with image logo styling */
+.raven-logo-img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Removed old .raven-logo text styles */
+
+.raven-close {
+  background: none;
+  border: none;
+  color: #3b3b3b;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.raven-close:hover {
+  color: #cccccc;
+}
+
+.raven-tabs {
+  display: flex;
+  gap: 10px;
+  /* Reduced margin from 15px to 10px for tighter spacing */
+  margin-bottom: 10px;
+}
+
+.raven-tab {
+  flex: 1;
+  padding: 10px 16px;
+  background: #272727;
+  border: 2px solid transparent;
+  border-radius: 28px;
+  color: #cccccc;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Montserrat", sans-serif;
+}
+
+.raven-tab:hover {
+  border-color: #3b3b3b;
+}
+
+.raven-tab.active {
+  background: #272727;
+  border: 2px solid #7216c7;
+  color: #fffd71;
+}
+
+.raven-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 15px; /* 15px spacing */
+}
+
+.raven-stat-card {
+  background: #272727;
+  border-radius: 12px;
+  /* Increased padding from 10px to 12px for slightly taller stat boxes */
+  padding: 12px;
+  text-align: center;
+}
+
+.raven-stat-value {
+  /* Increased font size from 22px to 24px */
+  font-size: 24px;
+  font-weight: 700;
+  color: #fffd71;
+  /* Reduced margin from 4px to 2px for tighter spacing */
+  margin-bottom: 2px;
+  font-family: "Montserrat", sans-serif;
+}
+
+.raven-stat-label {
+  /* Reduced font size from 10px to 9px */
+  font-size: 9px;
+  color: #cccccc;
+  font-weight: 500;
+  font-family: "Montserrat", sans-serif;
+  white-space: nowrap; /* Prevents text from wrapping to two lines */
+}
+
+.raven-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px; /* 15px spacing */
+}
+
+.raven-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  font-family: "Montserrat", sans-serif;
+}
+
+.raven-view-all {
+  background: #7216c7;
+  border: none;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: "Montserrat", sans-serif;
+}
+
+.raven-view-all:hover {
+  background: #501982;
+}
+
+.raven-listings {
+  /* Increased height from 200px to 240px to show 3 listings */
+  height: 240px !important;
+  max-height: 240px !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  /* Reduced gap from 15px to 10px between listings */
+  gap: 10px;
+  padding-right: 8px;
+  flex-shrink: 0 !important;
+}
+
+.raven-listings::-webkit-scrollbar {
+  width: 6px;
+}
+
+.raven-listings::-webkit-scrollbar-track {
+  background: #272727;
+  border-radius: 3px;
+}
+
+.raven-listings::-webkit-scrollbar-thumb {
+  background: #3b3b3b;
+  border-radius: 3px;
+}
+
+.raven-listings::-webkit-scrollbar-thumb:hover {
+  background: #cccccc;
+}
+
+.raven-listing-item {
+  display: flex;
+  gap: 12px;
+  background: #272727;
+  border-radius: 12px;
+  /* Reduced padding from 12px to 10px for more compact listing cards */
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  position: relative; /* Adding platform badge overlay for listing images */
+}
+
+.raven-listing-item:hover {
+  background: #3b3b3b;
+}
+
+.raven-listing-image {
+  /* Reduced from 70x70px to 60x60px for smaller listing cards */
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Adding platform badge overlay for listing images */
+.raven-platform-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  z-index: 10;
+  font-family: "Montserrat", sans-serif;
+}
+
+.raven-platform-ebay {
+  background: #e53238;
+}
+
+.raven-platform-craigslist {
+  background: #7216c7;
+}
+
+.raven-platform-facebook {
+  background: #1877f2;
+}
+
+.raven-listing-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.raven-listing-price {
+  /* Reduced font size from 18px to 16px */
+  font-size: 16px;
+  font-weight: 700;
+  color: #fffd71;
+  margin-bottom: 4px;
+  font-family: "Montserrat", sans-serif;
+}
+
+.raven-listing-title {
+  /* Reduced font size from 13px to 12px */
+  font-size: 12px;
+  color: #ffffff;
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: "Montserrat", sans-serif;
+}
+
+/* Detail view styles */
+.raven-detail-view {
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+
+.raven-back-btn {
+  background: none;
+  border: none;
+  color: #cccccc;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 12px; /* Reduced from 15px to 12px for tighter spacing */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-family: "Montserrat", sans-serif;
+}
+
+.raven-back-btn:hover {
+  color: #ffffff;
+}
+
+.raven-detail-image-container {
+  /* Reduced image height from 160px to 140px to give more room */
+  width: 100%;
+  height: 140px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px; /* Reduced from 15px to 12px */
+  flex-shrink: 0;
+}
+
+.raven-detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.raven-detail-info {
+  margin-bottom: 12px; /* Reduced from 15px to 12px */
+  flex-shrink: 0;
+}
+
+.raven-detail-price {
+  /* Reduced font size from 28px to 24px for better proportion */
+  font-size: 24px;
+  font-weight: 700;
+  color: #fffd71;
+  margin-bottom: 6px;
+  font-family: "Montserrat", sans-serif;
+}
+
+.raven-detail-title {
+  /* Reduced font size from 14px to 13px and adjusted line height */
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 12px; /* Reduced from 15px to 12px */
+  font-family: "Montserrat", sans-serif;
+  line-height: 1.3;
+}
+
+.raven-listing-page-btn {
+  /* Reduced padding and font size for more compact button */
+  width: 100%;
+  background: #7216c7;
+  border: none;
+  color: #ffffff;
+  padding: 10px 16px; /* Reduced from 12px 20px to 10px 16px */
+  border-radius: 12px;
+  font-size: 12px; /* Reduced from 13px to 12px */
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: "Montserrat", sans-serif;
+  margin-bottom: 12px; /* Reduced from 15px to 12px */
+  flex-shrink: 0;
+}
+
+.raven-listing-page-btn:hover {
+  background: #501982;
+}
+
+/* Adding loading screen styles with flying bird animation */
+.raven-loading-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.raven-loading-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+
+.raven-loading-bird-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.raven-loading-gradient {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fffd71 0%, #e8c855 30%, #d49ac8 60%, #7216c7 100%);
+  filter: blur(15px);
+  z-index: 0;
+}
+
+/* Updated bird animation styles to work with GIF instead of SVG */
+.raven-loading-bird-gif {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  z-index: 1;
+  object-fit: contain;
+}
+
+/* Removed old SVG bird styles */
+
+.raven-loading-text {
+  text-align: center;
+}
+
+.raven-loading-label {
+  font-size: 16px;
+  color: #ffffff;
+  font-weight: 500;
+  margin-bottom: 8px;
+  font-family: "Montserrat", sans-serif;
+}
+
+.raven-loading-title {
+  font-size: 18px;
+  color: #fffd71;
+  font-weight: 700;
+  font-family: "Montserrat", sans-serif;
+  line-height: 1.4;
+  max-width: 240px;
+  margin: 0 auto;
+}
