@@ -87,6 +87,77 @@ async function ebaySearch(title, price, condition, limit){
     return data.itemSummaries;
 }
 
+async function craigslistSearch(title, price){
+    const browser = await puppeteer.launch({ 
+        headless: false,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    
+    const page = await browser.newPage();
+    
+    const place = 'sfbay';
+    const minPrice = 1;
+    const maxPrice = price + 1000;
+
+    const url = `https://${place}.craigslist.org/search/bia?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
+    console.log('Navigating to:', url);
+    
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    
+    // Wait for listings to load
+    await page.waitForSelector('.cl-search-result', { timeout: 10000 });
+    
+    console.log('Page loaded, extracting data...');
+    
+    // Extract listing data (first 10 items)
+    const listings = await page.evaluate(() => {
+        const results = [];
+        const listingElements = document.querySelectorAll('.cl-search-result');
+        
+        // Get only first 10 listings
+        const firstTen = Array.from(listingElements).slice(0, 10);
+        
+        firstTen.forEach(listing => {
+            // Title
+            const titleElement = listing.querySelector('a.posting-title .label');
+            const title = titleElement ? titleElement.textContent.trim() : 'N/A';
+            
+            // Price
+            const priceElement = listing.querySelector('.priceinfo');
+            const price = priceElement ? priceElement.textContent.trim() : 'N/A';
+            
+            // URL
+            const linkElement = listing.querySelector('a.posting-title');
+            const url = linkElement ? linkElement.href : 'N/A';
+            
+            // First Image
+            const imgElement = listing.querySelector('img');
+            const image = imgElement ? imgElement.src : 'N/A';
+            
+            results.push({
+                title,
+                price,
+                image,
+                url
+            });
+        });
+        
+        return results;
+    });
+    
+    console.log(`\nExtracted ${listings.length} Craigslist listings:`);
+    console.log(JSON.stringify(listings, null, 2));
+    
+    // Save to JSON file
+    fs.writeFileSync('craigslist-results.json', JSON.stringify(listings, null, 2));
+    console.log('\nResults saved to craigslist-results.json');
+    
+    await browser.close();
+    
+    return listings;
+}
+
+
 //main function
 async function main(){
 
@@ -112,6 +183,9 @@ async function main(){
 
     //run eBay search using title, price, condition information from facebook, and query limit defined in main();
     await ebaySearch(facebook_title, facebook_price, facebook_condition, 10);
+
+    //run Craigslist using same varibles, saves as json
+    const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
 }
 
 //call main (final debugging step)
