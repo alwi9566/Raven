@@ -1,3 +1,7 @@
+const puppeteer = require('puppeteer');
+const fs = require('fs');
+
+
 async function tesseract_extract(path){
     const {createWorker} = require('tesseract.js');
     const worker = await createWorker('eng');
@@ -99,13 +103,14 @@ async function craigslistSearch(title, price){
     const minPrice = 1;
     const maxPrice = price + 1000;
 
-    const url = `https://${place}.craigslist.org/search/bia?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
+    const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
     console.log('Navigating to:', url);
     
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     
     // Wait for listings to load
-    await page.waitForSelector('.cl-search-result', { timeout: 10000 });
+    console.log('Page loaded. Waiting and checking for listings...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     console.log('Page loaded, extracting data...');
     
@@ -183,6 +188,10 @@ async function main(){
 
     //run eBay search using title, price, condition information from facebook, and query limit defined in main();
     await ebaySearch(facebook_title, facebook_price, facebook_condition, 10);
+
+    // Convert price from "$300" to 300
+    const numericPrice = parseInt(facebook_price.replace(/\$/g, '').replace(/,/g, ''));
+    console.log('Numeric price:', numericPrice);
 
     //run Craigslist using same varibles, saves as json
     const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
