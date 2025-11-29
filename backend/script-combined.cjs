@@ -108,43 +108,74 @@ async function craigslistSearch(title, price){
     
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     
-    // Wait for listings to load
-    console.log('Page loaded. Waiting and checking for listings...');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    console.log('Page loaded. Scrolling to load images...');
     
-    console.log('Page loaded, extracting data...');
+    // AUTO-SCROLL to trigger lazy-loaded images
+    await page.evaluate(async () => {
+        await new Promise((resolve) => {
+            let totalHeight = 0;
+            const distance = 100; // Scroll 100px at a time
+            const timer = setInterval(() => {
+                window.scrollBy(0, distance);
+                totalHeight += distance;
+                
+                // Stop after scrolling 1500px (enough for ~10-15 images)
+                if (totalHeight >= 2000) {
+                    clearInterval(timer);
+                    resolve();
+                }
+            }, 100); // Scroll every 100ms
+        });
+    });
     
-    // Extract listing data (first 10 items)
+    // Wait for images to fully load after scrolling
+    console.log('Waiting for images to load...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Try to find listings with different selectors
     const listings = await page.evaluate(() => {
         const results = [];
-        const listingElements = document.querySelectorAll('.cl-search-result');
+        
+        // Try multiple possible selectors
+        let listingElements = document.querySelectorAll('.cl-search-result');
+        if (listingElements.length === 0) {
+            listingElements = document.querySelectorAll('[class*="result"]');
+        }
+        if (listingElements.length === 0) {
+            listingElements = document.querySelectorAll('.gallery-card');
+        }
+        
+        console.log(`Found ${listingElements.length} listing elements`);
         
         // Get only first 10 listings
         const firstTen = Array.from(listingElements).slice(0, 10);
         
         firstTen.forEach(listing => {
-            // Title
-            const titleElement = listing.querySelector('a.posting-title .label');
+            // Try to extract data flexibly
+            const titleElement = listing.querySelector('a.posting-title .label') || 
+                                listing.querySelector('[class*="title"]') ||
+                                listing.querySelector('a');
             const title = titleElement ? titleElement.textContent.trim() : 'N/A';
             
-            // Price
-            const priceElement = listing.querySelector('.priceinfo');
+            const priceElement = listing.querySelector('.priceinfo') ||
+                                listing.querySelector('[class*="price"]');
             const price = priceElement ? priceElement.textContent.trim() : 'N/A';
             
-            // URL
-            const linkElement = listing.querySelector('a.posting-title');
+            const linkElement = listing.querySelector('a.posting-title') ||
+                               listing.querySelector('a');
             const url = linkElement ? linkElement.href : 'N/A';
             
-            // First Image
             const imgElement = listing.querySelector('img');
             const image = imgElement ? imgElement.src : 'N/A';
             
-            results.push({
-                title,
-                price,
-                image,
-                url
-            });
+            if (title !== 'N/A') {  // Only add if we found at least a title
+                results.push({
+                    title,
+                    price,
+                    image,
+                    url
+                });
+            }
         });
         
         return results;
