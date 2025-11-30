@@ -1,3 +1,13 @@
+/**
+ * Welcome to Cloudflare Workers! This is your first worker.
+ *
+ * - Run `npm run dev` in your terminal to start a development server
+ * - Open a browser tab at http://localhost:8787/ to see your worker in action
+ * - Run `npm run deploy` to publish your worker
+ *
+ * Learn more at https://developers.cloudflare.com/workers/
+ */
+
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
@@ -69,12 +79,12 @@ async function ebaySearch(title, price, condition, limit){
 
     if (data.itemSummaries) {
         data.itemSummaries.forEach((item, index) => {
-            const title = item.title;
+            const ebay_title = item.title;
             const brand = item.brand || 'N/A';
-            const price = item.price?.value + " " + item.price?.currency;
-            const url = item.itemWebUrl;
-            const imageUrl = item.image.imageUrl;
-            const condition = item.condition || 'N/A';
+            const ebay_price = item.price?.value + " " + item.price?.currency;
+            const ebay_url = item.itemWebUrl;
+            const ebay_imageUrl = item.image.imageUrl;
+            const ebay_condition = item.condition || 'N/A';
             
             console.log(`${index + 1}. ${title}`);
             console.log(`Brand: ${brand}`);
@@ -88,7 +98,14 @@ async function ebaySearch(title, price, condition, limit){
     }
 
     //console.log(data.itemSummaries);
-    return data.itemSummaries;
+    //return data.itemSummaries;
+    return{
+        ebay_title,
+        ebay_price,
+        ebay_condition,
+        ebay_url,
+        ebay_imageUrl
+    }
 }
 
 async function craigslistSearch(title, price){
@@ -155,25 +172,25 @@ async function craigslistSearch(title, price){
             const titleElement = listing.querySelector('a.posting-title .label') || 
                                 listing.querySelector('[class*="title"]') ||
                                 listing.querySelector('a');
-            const title = titleElement ? titleElement.textContent.trim() : 'N/A';
+            const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
             
             const priceElement = listing.querySelector('.priceinfo') ||
                                 listing.querySelector('[class*="price"]');
-            const price = priceElement ? priceElement.textContent.trim() : 'N/A';
+            const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
             
             const linkElement = listing.querySelector('a.posting-title') ||
                                listing.querySelector('a');
-            const url = linkElement ? linkElement.href : 'N/A';
+            const craigslist_url = linkElement ? linkElement.href : 'N/A';
             
             const imgElement = listing.querySelector('img');
-            const image = imgElement ? imgElement.src : 'N/A';
+            const craigslist_image = imgElement ? imgElement.src : 'N/A';
             
             if (title !== 'N/A') {  // Only add if we found at least a title
                 results.push({
-                    title,
-                    price,
-                    image,
-                    url
+                    craigslist_title,
+                    craigslist_price,
+                    craigslist_image,
+                    craigslist_url
                 });
             }
         });
@@ -195,7 +212,43 @@ async function craigslistSearch(title, price){
 
 
 //main function
-async function main(){
+// export default async function backend(){
+
+//     //define screenshot patch
+//     //const image_path = 'screenshot.png';
+
+//     //define eBay query limit
+//     const limit = 10;
+
+//     //for debugging
+//     console.log('Extracting text from image...');
+//     //const text = await tesseract_extract('screenshot.png');
+//     //console.log(text);
+
+//     //call tesseract_extract and store responses as title, price, and condition
+//     const {facebook_title, facebook_price, facebook_condition} = await tesseract_extract('screenshot.png');
+//     console.log(facebook_title);
+//     console.log(facebook_price);
+//     console.log(facebook_condition);
+
+//     //for debugging
+//     console.log('Searching eBay...');
+
+//     //run eBay search using title, price, condition information from facebook, and query limit defined in main();
+//     await ebaySearch(facebook_title, facebook_price, facebook_condition, 10);
+
+//     // Convert price from "$300" to 300
+//     const numericPrice = parseInt(facebook_price.replace(/\$/g, '').replace(/,/g, ''));
+//     console.log('Numeric price:', numericPrice);
+
+//     //run Craigslist using same varibles, saves as json
+//     const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
+// }
+
+import { WorkerEntrypoint } from 'cloudflare:workers';
+
+export default class Backend extends WorkerEntrypoint {
+  async fetch(request) {
 
     //define screenshot patch
     //const image_path = 'screenshot.png';
@@ -205,11 +258,11 @@ async function main(){
 
     //for debugging
     console.log('Extracting text from image...');
-    const text = await tesseract_extract('screenshot.png');
+    //const text = await tesseract_extract('screenshot.png');
     //console.log(text);
 
     //call tesseract_extract and store responses as title, price, and condition
-    const { facebook_title, facebook_price, facebook_condition } = await tesseract_extract('screenshot.png');
+    const {facebook_title, facebook_price, facebook_condition} = await tesseract_extract('screenshot.png');
     console.log(facebook_title);
     console.log(facebook_price);
     console.log(facebook_condition);
@@ -226,7 +279,5 @@ async function main(){
 
     //run Craigslist using same varibles, saves as json
     const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
+  }
 }
-
-//call main (final debugging step)
-main();
