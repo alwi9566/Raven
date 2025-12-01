@@ -1,65 +1,98 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
-
-(async () => {
-    const browser = await puppeteer.launch({ 
+const browser = await puppeteer.launch({ 
         headless: false,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
     const page = await browser.newPage();
     
-    const place = ' '
-    const title = ' '
-    var price = 1 + 2000;
+    const place = 'sfbay';
+    const minPrice = 1;
+    const maxPrice = price + 1000;
 
-    const url = 'https://${place}.craigslist.org/search/bia?query=${title}&min_price=10&max_price=${price}#search=1~gallery~0~0';
+    const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
     console.log('Navigating to:', url);
     
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     
-    // Wait for listings to load
-    await page.waitForSelector('.cl-search-result', { timeout: 10000 });
+    console.log('Page loaded. Scrolling to load images...');
     
-    console.log('Page loaded, extracting data...');
+    // AUTO-SCROLL to trigger lazy-loaded images
+    await page.evaluate(async () => {
+        await new Promise((resolve) => {
+            let totalHeight = 0;
+            const distance = 100; // Scroll 100px at a time
+            const timer = setInterval(() => {
+                window.scrollBy(0, distance);
+                totalHeight += distance;
+                
+                // Stop after scrolling 1500px (enough for ~10-15 images)
+                if (totalHeight >= 2000) {
+                    clearInterval(timer);
+                    resolve();
+                }
+            }, 100); // Scroll every 100ms
+        });
+    });
     
-    // Extract listing data (first 10 items)
+    // Wait for images to fully load after scrolling
+    console.log('Waiting for images to load...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Save HTML for debugging
+    const html = await page.content();
+    fs.writeFileSync('craigslist-debug.html', html);
+    console.log('HTML saved to craigslist-debug.html');
+    
+    // Try to find listings with different selectors
     const listings = await page.evaluate(() => {
         const results = [];
-        const listingElements = document.querySelectorAll('.cl-search-result');
+        
+        // Try multiple possible selectors
+        let listingElements = document.querySelectorAll('.cl-search-result');
+        if (listingElements.length === 0) {
+            listingElements = document.querySelectorAll('[class*="result"]');
+        }
+        if (listingElements.length === 0) {
+            listingElements = document.querySelectorAll('.gallery-card');
+        }
+        
+        console.log(`Found ${listingElements.length} listing elements`);
         
         // Get only first 10 listings
         const firstTen = Array.from(listingElements).slice(0, 10);
         
         firstTen.forEach(listing => {
-            // Title
-            const titleElement = listing.querySelector('a.posting-title .label');
+            // Try to extract data flexibly
+            const titleElement = listing.querySelector('a.posting-title .label') || 
+                                listing.querySelector('[class*="title"]') ||
+                                listing.querySelector('a');
             const title = titleElement ? titleElement.textContent.trim() : 'N/A';
             
-            // Price
-            const priceElement = listing.querySelector('.priceinfo');
+            const priceElement = listing.querySelector('.priceinfo') ||
+                                listing.querySelector('[class*="price"]');
             const price = priceElement ? priceElement.textContent.trim() : 'N/A';
             
-            // URL
-            const linkElement = listing.querySelector('a.posting-title');
+            const linkElement = listing.querySelector('a.posting-title') ||
+                               listing.querySelector('a');
             const url = linkElement ? linkElement.href : 'N/A';
             
-            // First Image
             const imgElement = listing.querySelector('img');
             const image = imgElement ? imgElement.src : 'N/A';
             
-            results.push({
-                title,
-                price,
-                image,
-                url
-            });
+            if (title !== 'N/A') {  // Only add if we found at least a title
+                results.push({
+                    title,
+                    price,
+                    image,
+                    url
+                });
+            }
         });
         
         return results;
     });
     
-    console.log(`\nExtracted ${listings.length} listings:`);
+    console.log(`\nExtracted ${listings.length} Craigslist listings:`);
     console.log(JSON.stringify(listings, null, 2));
     
     // Save to JSON file
@@ -67,4 +100,5 @@ const fs = require('fs');
     console.log('\nResults saved to craigslist-results.json');
     
     await browser.close();
-})();
+    
+    return listings;
