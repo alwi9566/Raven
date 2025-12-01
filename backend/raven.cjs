@@ -1,13 +1,3 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
-
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
@@ -200,11 +190,7 @@ async function craigslistSearch(title, price){
     return listings;
 }
 
-import { WorkerEntrypoint } from 'cloudflare:workers';
-
-export default class Backend extends WorkerEntrypoint {
-  async fetch(request) {
-
+async function main(){
     console.log('Extracting text from image...');
 
     //call tesseract_extract and store responses as title, price, and condition
@@ -225,5 +211,6 @@ export default class Backend extends WorkerEntrypoint {
 
     //run Craigslist using same varibles, saves as json
     const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
-  }
 }
+
+main();
