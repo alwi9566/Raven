@@ -7,7 +7,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.craigslist.org/*", "*://*.ebay.com/*", "*://www.facebook.com/*"],
-      "js": ["content.js"],
+      "js": ["content.js","../backend/script-combined.cjs"],
       "css": ["content.css"]
     }
   ],
