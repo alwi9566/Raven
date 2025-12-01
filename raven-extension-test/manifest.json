@@ -4,8 +4,8 @@
   "version": "1.0",
   "description": "Find and track marketplace listings across Craigslist, Ebay, and Facebook Marketplace",
   "permissions": [
-    "tabs",
-    "<all_urls>"
+    "activeTab",
+    "scripting"
   ],
   "host_permissions": [
     "*://*.craigslist.org/*",
@@ -13,6 +13,9 @@
     "*://www.facebook.com/*",
     "*://*.workers.dev/*"
   ],
+  "action": {
+    "default_title": "RAVEN - Find Similar Listings"
+  },
   "background": {
     "service_worker": "background.js"
   },

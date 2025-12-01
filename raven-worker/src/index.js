@@ -1,32 +1,32 @@
 /**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
+ * Raven Worker - Updated for Chrome Extension Integration
+ * Receives cropped screenshots from extension and processes them
  */
 
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+// eBay API credentials
+const client_id = 'ElyCariv-Capstone-PRD-e0ddfec83-ca98af90';
+const client_secret = 'PRD-0ddfec83f99c-91e5-417c-9e0c-1e5d';
 
-
-async function tesseract_extract(path){
-    const {createWorker} = require('tesseract.js');
+/**
+ * Extracts text from base64 image using Tesseract OCR
+ */
+async function tesseract_extract(imageDataURL) {
+    const { createWorker } = require('tesseract.js');
     const worker = await createWorker('eng');
 
-    const {data:{text}} = await worker.recognize(path);
-
+    const { data: { text } } = await worker.recognize(imageDataURL);
     await worker.terminate();
 
-    const facebook_title = text.match(/^[^$]*/)[0].trim();
-    const facebook_price = text.match(/\$\d+\.?\d*/g)[0];
-    const facebook_condition = text.split(/Condition\s*(\S+)/)[1];
+    console.log('Raw OCR text:', text);
 
-    console.log(facebook_title);
-    console.log(facebook_price);
-    console.log(facebook_condition);
+    // Extract title, price, and condition using regex
+    const facebook_title = text.match(/^[^$]*/)?.[0]?.trim() || 'Not found';
+    const facebook_price = text.match(/\$\d+\.?\d*/g)?.[0] || 'Not found';
+    const facebook_condition = text.split(/Condition\s*(\S+)/)?.[1] || 'Not found';
+
+    console.log('Extracted - Title:', facebook_title);
+    console.log('Extracted - Price:', facebook_price);
+    console.log('Extracted - Condition:', facebook_condition);
 
     return {
         facebook_title,
@@ -35,195 +35,195 @@ async function tesseract_extract(path){
     };
 }
 
-//credentials associated with eBay developer account
-const client_id = 'ElyCariv-Capstone-PRD-e0ddfec83-ca98af90';
-const client_secret = 'PRD-0ddfec83f99c-91e5-417c-9e0c-1e5d';
-
-async function generateToken (id, secret){
+/**
+ * Generates eBay OAuth token
+ */
+async function generateToken() {
     const credentials = Buffer.from(`${client_id}:${client_secret}`).toString('base64');
 
-    const oauth_url = 'https://api.ebay.com/identity/v1/oauth2/token';
-
     const token_response = await fetch("https://api.ebay.com/identity/v1/oauth2/token", {
-        method: "POST",  
-        headers:{"Content-Type": "application/x-www-form-urlencoded", "Authorization": `Basic ${credentials}`},
-        body:'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": `Basic ${credentials}`
+        },
+        body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
     });
 
     const token = await token_response.json();
-
-    //pass token to ebaySearch();
     return token.access_token;
-};
+}
 
-async function ebaySearch(title, price, condition, limit){
-
-    //call token generation function, store token
+/**
+ * Searches eBay for similar items
+ */
+async function ebaySearch(title, price, condition, limit = 10) {
     const token = await generateToken();
 
-    //build API url using title, price, condition, and response limit
-    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(title)}&filter=price:[${price}..${price}],conditions:${condition}&limit=${limit}`;
+    // Clean up price for API
+    const numericPrice = parseInt(price.replace(/\$/g, '').replace(/,/g, ''));
+    const priceRange = Math.max(1, numericPrice - 100); // Search within $100 range
 
-    //fetch API response, passing token and storing as variable "response"
-    const response = await fetch (url, {headers: { Authorization: `Bearer ${token}`}});
+    // Build API URL
+    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(title)}&filter=price:[${priceRange}..${numericPrice + 100}]&limit=${limit}`;
+
+    console.log('eBay search URL:', url);
+
+    const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
 
     const data = await response.json();
 
     if (data.itemSummaries) {
-        data.itemSummaries.forEach((item, index) => {
-            const ebay_title = item.title;
-            const brand = item.brand || 'N/A';
-            const ebay_price = item.price?.value + " " + item.price?.currency;
-            const ebay_url = item.itemWebUrl;
-            const ebay_imageUrl = item.image.imageUrl;
-            const ebay_condition = item.condition || 'N/A';
-            
-            console.log(`${index + 1}. ${title}`);
-            console.log(`Brand: ${brand}`);
-            console.log(`Price: ${price}`);
-            console.log(`Condition: ${condition}`);
-            console.log(`URL: ${url}`);
-            console.log(`Image URL: ${imageUrl}`);
-        });
-    } else {
-        console.log('No items found or error in response:', data);
-    }
+        const results = data.itemSummaries.map(item => ({
+            ebay_title: item.title,
+            brand: item.brand || 'N/A',
+            ebay_price: `${item.price?.value} ${item.price?.currency}`,
+            ebay_url: item.itemWebUrl,
+            ebay_imageUrl: item.image?.imageUrl || 'N/A',
+            ebay_condition: item.condition || 'N/A'
+        }));
 
-    return{
-        ebay_title,
-        ebay_price,
-        ebay_condition,
-        ebay_url,
-        ebay_imageUrl
+        console.log(`Found ${results.length} eBay results`);
+        return results;
+    } else {
+        console.log('No eBay items found or error:', data);
+        return [];
     }
 }
 
-async function craigslistSearch(title, price){
-    const browser = await puppeteer.launch({ 
-        headless: false,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    
-    const page = await browser.newPage();
-    
-    const place = 'sfbay';
-    const minPrice = 1;
-    const maxPrice = price + 1000;
+/**
+ * Searches Craigslist using RSS feeds (Worker-compatible)
+ */
+async function craigslistSearchRSS(title, price, location = 'sfbay') {
+    try {
+        const numericPrice = parseInt(price.replace(/\$/g, '').replace(/,/g, ''));
+        const minPrice = 1;
+        const maxPrice = numericPrice + 1000;
 
-    const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
-    console.log('Navigating to:', url);
-    
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-    
-    console.log('Page loaded. Scrolling to load images...');
-    
-    // AUTO-SCROLL to trigger lazy-loaded images
-    await page.evaluate(async () => {
-        await new Promise((resolve) => {
-            let totalHeight = 0;
-            const distance = 100; // Scroll 100px at a time
-            const timer = setInterval(() => {
-                window.scrollBy(0, distance);
-                totalHeight += distance;
-                
-                // Stop after scrolling 1500px (enough for ~10-15 images)
-                if (totalHeight >= 2000) {
-                    clearInterval(timer);
-                    resolve();
-                }
-            }, 100); // Scroll every 100ms
-        });
-    });
-    
-    // Wait for images to fully load after scrolling
-    console.log('Waiting for images to load...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Try to find listings with different selectors
-    const listings = await page.evaluate(() => {
+        const url = `https://${location}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}&format=rss`;
+
+        console.log('Craigslist RSS URL:', url);
+
+        const response = await fetch(url);
+        const xmlText = await response.text();
+
+        // Basic XML parsing for RSS
+        const itemMatches = xmlText.matchAll(/<item>(.*?)<\/item>/gs);
         const results = [];
-        
-        // Try multiple possible selectors
-        let listingElements = document.querySelectorAll('.cl-search-result');
-        if (listingElements.length === 0) {
-            listingElements = document.querySelectorAll('[class*="result"]');
-        }
-        if (listingElements.length === 0) {
-            listingElements = document.querySelectorAll('.gallery-card');
-        }
-        
-        console.log(`Found ${listingElements.length} listing elements`);
-        
-        // Get only first 10 listings
-        const firstTen = Array.from(listingElements).slice(0, 10);
-        
-        firstTen.forEach(listing => {
-            // Try to extract data flexibly
-            const titleElement = listing.querySelector('a.posting-title .label') || 
-                                listing.querySelector('[class*="title"]') ||
-                                listing.querySelector('a');
-            const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
-            
-            const priceElement = listing.querySelector('.priceinfo') ||
-                                listing.querySelector('[class*="price"]');
-            const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
-            
-            const linkElement = listing.querySelector('a.posting-title') ||
-                               listing.querySelector('a');
-            const craigslist_url = linkElement ? linkElement.href : 'N/A';
-            
-            const imgElement = listing.querySelector('img');
-            const craigslist_image = imgElement ? imgElement.src : 'N/A';
-            
-            if (title !== 'N/A') {  // Only add if we found at least a title
+
+        for (const match of itemMatches) {
+            const itemXml = match[1];
+
+            const titleMatch = itemXml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/);
+            const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
+            const descMatch = itemXml.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/);
+
+            if (titleMatch && linkMatch) {
                 results.push({
-                    craigslist_title,
-                    craigslist_price,
-                    craigslist_image,
-                    craigslist_url
+                    craigslist_title: titleMatch[1].trim(),
+                    craigslist_price: titleMatch[1].match(/\$\d+/)?.[0] || 'N/A',
+                    craigslist_url: linkMatch[1].trim(),
+                    craigslist_description: descMatch ? descMatch[1].substring(0, 100) : 'N/A'
                 });
             }
-        });
-        
+
+            // Limit to 10 results
+            if (results.length >= 10) break;
+        }
+
+        console.log(`Found ${results.length} Craigslist results`);
         return results;
-    });
-    
-    console.log(`\nExtracted ${listings.length} Craigslist listings:`);
-    console.log(JSON.stringify(listings, null, 2));
-    
-    // Save to JSON file
-    fs.writeFileSync('craigslist-results.json', JSON.stringify(listings, null, 2));
-    console.log('\nResults saved to craigslist-results.json');
-    
-    await browser.close();
-    
-    return listings;
+
+    } catch (error) {
+        console.error('Craigslist search error:', error);
+        return [];
+    }
 }
 
-import { WorkerEntrypoint } from 'cloudflare:workers';
+/**
+ * Main Worker fetch handler
+ */
+export default {
+    async fetch(request, env, ctx) {
+        // Handle CORS preflight
+        if (request.method === 'OPTIONS') {
+            return new Response(null, {
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                }
+            });
+        }
 
-export default class Backend extends WorkerEntrypoint {
-  async fetch(request) {
+        try {
+            // Only accept POST requests
+            if (request.method !== 'POST') {
+                return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+                    status: 405,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
 
-    console.log('Extracting text from image...');
+            // Parse request body
+            const body = await request.json();
+            const { screenshot, source } = body;
 
-    //call tesseract_extract and store responses as title, price, and condition
-    const {facebook_title, facebook_price, facebook_condition} = await tesseract_extract('screenshot.png');
-    console.log(facebook_title);
-    console.log(facebook_price);
-    console.log(facebook_condition);
+            if (!screenshot) {
+                return new Response(JSON.stringify({ error: 'No screenshot provided' }), {
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
 
-    //for debugging
-    console.log('Searching eBay...');
+            console.log('Received screenshot from:', source);
+            console.log('Screenshot size:', screenshot.length, 'bytes');
 
-    //run eBay search using title, price, condition information from facebook, and query limit defined in main();
-    await ebaySearch(facebook_title, facebook_price, facebook_condition, 10);
+            // Step 1: Extract data from screenshot using OCR
+            console.log('Starting OCR extraction...');
+            const { facebook_title, facebook_price, facebook_condition } = await tesseract_extract(screenshot);
 
-    // Convert price from "$300" to 300
-    const numericPrice = parseInt(facebook_price.replace(/\$/g, '').replace(/,/g, ''));
-    console.log('Numeric price:', numericPrice);
+            // Step 2: Search eBay
+            console.log('Searching eBay...');
+            const ebayResults = await ebaySearch(facebook_title, facebook_price, facebook_condition, 10);
 
-    //run Craigslist using same varibles, saves as json
-    const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
-  }
-}
+            // Step 3: Search Craigslist (RSS)
+            console.log('Searching Craigslist...');
+            const craigslistResults = await craigslistSearchRSS(facebook_title, facebook_price);
+
+            // Step 4: Return results
+            const results = {
+                success: true,
+                facebook_title,
+                facebook_price,
+                facebook_condition,
+                ebay_results: ebayResults,
+                craigslist_results: craigslistResults
+            };
+
+            return new Response(JSON.stringify(results), {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            });
+
+        } catch (error) {
+            console.error('Worker error:', error);
+
+            return new Response(JSON.stringify({
+                success: false,
+                error: error.message,
+                stack: error.stack
+            }), {
+                status: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            });
+        }
+    }
+};
