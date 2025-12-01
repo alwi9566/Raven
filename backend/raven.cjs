@@ -86,7 +86,8 @@ async function ebaySearch(title, price, condition, limit){
 
 async function craigslistSearch(title, price){
     const browser = await puppeteer.launch({ 
-        headless: false,
+        //change to headless for showcase 
+        headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
@@ -161,14 +162,20 @@ async function craigslistSearch(title, price){
             const imgElement = listing.querySelector('img');
             const craigslist_image = imgElement ? imgElement.src : 'N/A';
             
-            if (title !== 'N/A') {  // Only add if we found at least a title
-                results.push({
-                    craigslist_title,
-                    craigslist_price,
-                    craigslist_image,
-                    craigslist_url
-                });
-            }
+            // if (title !== 'N/A') {  // Only add if we found at least a title
+            //     results.push({
+            //         craigslist_title,
+            //         craigslist_price,
+            //         craigslist_image,
+            //         craigslist_url
+            //     });
+            // }
+            results.push({
+             craigslist_title,
+             craigslist_price,
+             craigslist_image,
+             craigslist_url
+            });
         });
         
         return results;
