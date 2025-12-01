@@ -13,11 +13,7 @@ async function tesseract_extract(path){
     const facebook_title = text.match(/^[^$]*/)[0].trim();
     const facebook_price = text.match(/\$\d+\.?\d*/g)[0];
     const facebook_condition = text.split(/Condition\s*(\S+)/)[1];
-
-    console.log(facebook_title);
-    console.log(facebook_price);
-    console.log(facebook_condition);
-
+    
     return {
         facebook_title,
         facebook_price,
