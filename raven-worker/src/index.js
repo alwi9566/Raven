@@ -209,9 +209,6 @@ export default class Backend extends WorkerEntrypoint {
 
     //call tesseract_extract and store responses as title, price, and condition
     const {facebook_title, facebook_price, facebook_condition} = await tesseract_extract('screenshot.png');
-    console.log(facebook_title);
-    console.log(facebook_price);
-    console.log(facebook_condition);
 
     //for debugging
     console.log('Searching eBay...');
@@ -221,9 +218,32 @@ export default class Backend extends WorkerEntrypoint {
 
     // Convert price from "$300" to 300
     const numericPrice = parseInt(facebook_price.replace(/\$/g, '').replace(/,/g, ''));
-    console.log('Numeric price:', numericPrice);
+    //console.log('Numeric price:', numericPrice);
 
     //run Craigslist using same varibles, saves as json
+    console.log('Searching Craigslist...');
     const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
+    console.log({
+        ebay_title,
+        ebay_price,
+        ebay_condition,
+        ebay_url,
+        ebay_imageUrl,
+        craigslist_title,
+        craigslist_price,
+        craigslist_url,
+        craigslist_image
+    });
+    return{
+        ebay_title,
+        ebay_price,
+        ebay_condition,
+        ebay_url,
+        ebay_imageUrl,
+        craigslist_title,
+        craigslist_price,
+        craigslist_url,
+        craigslist_image
+    }
   }
 }
