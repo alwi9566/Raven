@@ -13,7 +13,7 @@ async function tesseract_extract(path){
     const facebook_title = text.match(/^[^$]*/)[0].trim();
     const facebook_price = text.match(/\$\d+\.?\d*/g)[0];
     const facebook_condition = text.split(/Condition\s*(\S+)/)[1];
-    
+
     return {
         facebook_title,
         facebook_price,
@@ -58,18 +58,16 @@ async function ebaySearch(title, price, condition, limit){
     if (data.itemSummaries) {
         data.itemSummaries.forEach((item, index) => {
             const ebay_title = item.title;
-            const brand = item.brand || 'N/A';
             const ebay_price = item.price?.value + " " + item.price?.currency;
             const ebay_url = item.itemWebUrl;
             const ebay_imageUrl = item.image.imageUrl;
             const ebay_condition = item.condition || 'N/A';
             
-            console.log(`${index + 1}. ${title}`);
-            console.log(`Brand: ${brand}`);
-            console.log(`Price: ${price}`);
-            console.log(`Condition: ${condition}`);
-            console.log(`URL: ${url}`);
-            console.log(`Image URL: ${imageUrl}`);
+            console.log(`${index + 1}. ${ebay_title}`);
+            console.log(`Price: ${ebay_price}`);
+            console.log(`Condition: ${ebay_condition}`);
+            console.log(`URL: ${ebay_url}`);
+            console.log(`Image URL: ${ebay_imageUrl}`);
         });
     } else {
         console.log('No items found or error in response:', data);
