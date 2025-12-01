@@ -68,18 +68,20 @@ async function ebaySearch(title, price, condition, limit){
             console.log(`Condition: ${ebay_condition}`);
             console.log(`URL: ${ebay_url}`);
             console.log(`Image URL: ${ebay_imageUrl}`);
+            
+            return{
+                ebay_title,
+                ebay_price,
+                ebay_condition,
+                ebay_url,
+                ebay_imageUrl
+            }
         });
     } else {
         console.log('No items found or error in response:', data);
     }
 
-    return{
-        ebay_title,
-        ebay_price,
-        ebay_condition,
-        ebay_url,
-        ebay_imageUrl
-    }
+
 }
 
 async function craigslistSearch(title, price){
