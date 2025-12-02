@@ -1,11 +1,11 @@
-;(() => {
+ ;(() => {
   let overlay = null
   let currentTab = "all"
   let currentView = "list"
   let selectedListing = null
 
   // Express server URL (update this to match your server location)
-  const SERVER_URL = 'https://ravenextension.com/api/search'
+  const SERVER_URL = 'https://ravenextension.com:443/api/search'
   const TESTING_MODE = false // Set to true for testing screenshots only
 
   // Facebook Marketplace crop coordinates
