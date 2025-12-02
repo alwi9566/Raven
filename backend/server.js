@@ -1,4 +1,6 @@
 const express = require('express');
+const https = require('https');
+const http = require('http');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
@@ -6,6 +8,8 @@ const path = require('path');
 
 const app = express();
 const PORT = 3000;
+const HTTPS_PORT = 443;
+const HTTP_PORT = 80;
 
 // Enhanced CORS configuration for Chrome Extension
 app.use(cors({
@@ -257,15 +261,30 @@ app.post('/api/extract', async (req, res) => {
     }
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[SERVER] Raven server running on http://0.0.0.0:${PORT}`);
-    console.log(`[SERVER] Accessible from network at http://5.78.73.172:${PORT}`);
-    console.log(`[SERVER] Health check: http://5.78.73.172:${PORT}/health`);
-    console.log(`[SERVER] API endpoint: http://5.78.73.172:${PORT}/api/search`);
-    console.log(`[SERVER] CORS enabled for all origins`);
+// SSL Certificate Configuration
+const sslOptions = {
+    key: fs.readFileSync('/etc/letsencrypt/live/www.ravenextension.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/www.ravenextension.com/fullchain.pem')
+};
+
+// Create HTTPS server
+https.createServer(sslOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
+    console.log(`[SERVER] HTTPS Raven server running on https://www.ravenextension.com:${HTTPS_PORT}`);
+    console.log(`[SERVER] Health check: https://www.ravenextension.com:${HTTPS_PORT}/health`);
+    console.log(`[SERVER] API endpoint: https://www.ravenextension.com:${HTTPS_PORT}/api/search`);
 });
 
-app.listen(80, () =>{
+// Create HTTP server that redirects to HTTPS
+http.createServer((req, res) => {
+    res.writeHead(301, { 
+        Location: `https://${req.headers.host.replace(':80', '')}${req.url}` 
+    });
+    res.end();
+}).listen(HTTP_PORT, '0.0.0.0', () => {
+    console.log(`[SERVER] HTTP server running on port ${HTTP_PORT} (redirecting to HTTPS)`);
+});
 
+// Keep the original HTTP server on port 3000 for backward compatibility (optional)
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[SERVER] Development server still running on http://0.0.0.0:${PORT}`);
 });
