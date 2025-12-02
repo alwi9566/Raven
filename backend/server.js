@@ -279,7 +279,7 @@ https.createServer(sslOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
     console.log(`[SERVER] API endpoint: https://www.ravenextension.com:${HTTPS_PORT}/api/search`);
 });
 
-// Create HTTP server that redirects to HTTPS
+// Create HTTP server that redirects to HTTPS (maybe get rid of this!!!!!!!!!!!!!!!)
 http.createServer((req, res) => {
     res.writeHead(301, { 
         Location: `https://${req.headers.host.replace(':80', '')}${req.url}` 
