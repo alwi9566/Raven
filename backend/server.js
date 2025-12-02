@@ -290,11 +290,11 @@ https.createServer(sslOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
 });
 
 // Create HTTP server that redirects to HTTPS (maybe get rid of this!!!!!!!!!!!!!!!)
-http.createServer((req, res) => {
-    res.writeHead(301, { 
-        Location: `https://${req.headers.host.replace(':80', '')}${req.url}` 
-    });
-    res.end();
-}).listen(HTTP_PORT, '0.0.0.0', () => {
-    console.log(`[SERVER] HTTP server running on port ${HTTP_PORT} (redirecting to HTTPS)`);
-});
+// http.createServer((req, res) => {
+//     res.writeHead(301, { 
+//         Location: `https://${req.headers.host.replace(':80', '')}${req.url}` 
+//     });
+//     res.end();
+// }).listen(HTTP_PORT, '0.0.0.0', () => {
+//     console.log(`[SERVER] HTTP server running on port ${HTTP_PORT} (redirecting to HTTPS)`);
+// });
