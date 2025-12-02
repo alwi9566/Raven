@@ -6,7 +6,7 @@
 
   // Express server URL (update this to match your server location)
   const SERVER_URL = 'https://ravenextension.com:443/api/search'
-  const TESTING_MODE = true // Set to true for testing screenshots only
+  const TESTING_MODE = false // Set to true for testing screenshots only
 
   const window_width = window.innerWidth;
   const window_height = window.innerHeight;
