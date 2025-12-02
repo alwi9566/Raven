@@ -5,8 +5,8 @@
   let selectedListing = null
 
   // Your Cloudflare Worker URL
-  const WORKER_URL = 'https://5.78.73.172/'
-  const TESTING_MODE = true // Set to false when ready to connect to Worker
+  const WORKER_URL = 'http://5.78.73.172:3000'
+  const TESTING_MODE = false // Set to false when ready to connect to Worker
 
   // Facebook Marketplace crop coordinates
   const FACEBOOK_CROP = {
