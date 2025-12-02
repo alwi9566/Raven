@@ -10,9 +10,9 @@
 
   // Facebook Marketplace crop coordinates
   const FACEBOOK_CROP = {
-    yStart: 0,
-    yEnd: 75,
-    xStart: 79,
+    yStart: 5,
+    yEnd: 45,
+    xStart: 86,
     xEnd: 100
   }
 
