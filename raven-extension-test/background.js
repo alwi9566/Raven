@@ -28,12 +28,39 @@ chrome.action.onClicked.addListener(async (tab) => {
 
     console.log('[RAVEN] Screenshot captured, size:', screenshotDataUrl.length, 'bytes');
 
-    // Send screenshot to content script to process
-    chrome.tabs.sendMessage(tab.id, {
-      action: 'processScreenshot',
-      screenshot: screenshotDataUrl,
-      url: tab.url
-    });
+    // Send screenshot to content script with proper error handling
+    try {
+      const response = await chrome.tabs.sendMessage(tab.id, {
+        action: 'processScreenshot',
+        screenshot: screenshotDataUrl,
+        url: tab.url
+      });
+      console.log('[RAVEN] Content script response:', response);
+    } catch (messageError) {
+      console.error('[RAVEN] Error sending message to content script:', messageError);
+      console.log('[RAVEN] This usually means the content script is not injected. Trying to inject...');
+      
+      // Try to inject content script if it's not already there
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js']
+        });
+        
+        // Wait a bit for script to initialize
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Try sending message again
+        const retryResponse = await chrome.tabs.sendMessage(tab.id, {
+          action: 'processScreenshot',
+          screenshot: screenshotDataUrl,
+          url: tab.url
+        });
+        console.log('[RAVEN] Content script response (retry):', retryResponse);
+      } catch (injectError) {
+        console.error('[RAVEN] Failed to inject content script:', injectError);
+      }
+    }
 
   } catch (error) {
     console.error('[RAVEN] Error capturing screenshot:', error);
