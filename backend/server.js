@@ -11,12 +11,8 @@ const PORT = 3000;
 app.use(cors({
     origin: '*', // Allow all origins (needed for Chrome extensions)
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-// Handle preflight requests
-app.options('*', cors());
 
 // Middleware
 app.use(express.json({ limit: '50mb' })); // Increased limit for base64 images
