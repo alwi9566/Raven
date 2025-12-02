@@ -259,8 +259,9 @@ app.post('/api/extract', async (req, res) => {
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[SERVER] Raven server running on http://localhost:${PORT}`);
-    console.log(`[SERVER] Health check: http://localhost:${PORT}/health`);
-    console.log(`[SERVER] API endpoint: http://localhost:${PORT}/api/search`);
+    console.log(`[SERVER] Raven server running on http://0.0.0.0:${PORT}`);
+    console.log(`[SERVER] Accessible from network at http://5.78.73.172:${PORT}`);
+    console.log(`[SERVER] Health check: http://5.78.73.172:${PORT}/health`);
+    console.log(`[SERVER] API endpoint: http://5.78.73.172:${PORT}/api/search`);
     console.log(`[SERVER] CORS enabled for all origins`);
 });
