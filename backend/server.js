@@ -7,6 +7,7 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
+//store networking variables
 const app = express();
 const PORT = 3000;
 const HTTPS_PORT = 443;
@@ -20,26 +21,27 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Middleware
+//set image size limit higher for higher resolution screens
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// eBay credentials
+// eBay credentials (scary)
 const client_id = 'ElyCariv-Capstone-PRD-e0ddfec83-ca98af90';
 const client_secret = 'PRD-0ddfec83f99c-91e5-417c-9e0c-1e5d';
 
 // OCR extraction function
 async function tesseractExtract(imagePath) {
     const { createWorker } = require('tesseract.js');
+    //start worker
     const worker = await createWorker('eng');
-
+    //text extractrion
     const { data: { text } } = await worker.recognize(imagePath);
+    //kill worker
     await worker.terminate();
-
+    //isolate title, price, and condition
     const facebook_title = text.match(/^[^$]*/)[0].trim();
     const facebook_price = text.match(/\$\d+\.?\d*/g)[0];
     const facebook_condition = text.split(/Condition\s*(\S+)/)[1];
-
     return {
         facebook_title,
         facebook_price,
@@ -50,16 +52,18 @@ async function tesseractExtract(imagePath) {
 // Generate eBay OAuth token
 async function generateToken() {
     const credentials = Buffer.from(`${client_id}:${client_secret}`).toString('base64');
-
+    //make fetch request
     const token_response = await fetch("https://api.ebay.com/identity/v1/oauth2/token", {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            //include credentials
             "Authorization": `Basic ${credentials}`
         },
+        //set permissions scope for token
         body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
     });
-
+    //store as json object
     const token = await token_response.json();
     return token.access_token;
 }
