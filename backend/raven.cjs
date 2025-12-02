@@ -86,6 +86,7 @@ async function ebaySearch(title, price, condition, limit){
 
 async function craigslistSearch(title, price){
     const browser = await puppeteer.launch({ 
+        browser: "firefox",
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
