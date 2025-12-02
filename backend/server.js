@@ -88,184 +88,86 @@ async function ebaySearch(title, price, condition, limit) {
     }
 }
 
-// // Craigslist search function
-// async function craigslistSearch(title, price) {
-//     const browser = await puppeteer.launch({
-//         headless: true,
-//         args: ['--no-sandbox', '--disable-setuid-sandbox']
-//     });
-
-//     const page = await browser.newPage();
-
-//     const place = 'sfbay';
-//     const minPrice = 1;
-//     const maxPrice = price + 1000;
-
-//     const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
-
-//     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-
-//     // Auto-scroll to load images
-//     console.log("scrolling ebay...");
-//     await page.evaluate(async () => {
-//         await new Promise((resolve) => {
-//             let totalHeight = 0;
-//             const distance = 100;
-//             const timer = setInterval(() => {
-//                 window.scrollBy(0, distance);
-//                 totalHeight += distance;
-
-//                 if (totalHeight >= 2000) {
-//                     clearInterval(timer);
-//                     resolve();
-//                 }
-//             }, 100);
-//         });
-//     });
-
-//     await new Promise(resolve => setTimeout(resolve, 2000));
-
-//     const listings = await page.evaluate(() => {
-//         const results = [];
-
-//         let listingElements = document.querySelectorAll('.cl-search-result');
-//         if (listingElements.length === 0) {
-//             listingElements = document.querySelectorAll('[class*="result"]');
-//         }
-//         if (listingElements.length === 0) {
-//             listingElements = document.querySelectorAll('.gallery-card');
-//         }
-
-//         const firstTen = Array.from(listingElements).slice(0, 10);
-
-//         firstTen.forEach(listing => {
-//             const titleElement = listing.querySelector('a.posting-title .label') ||
-//                 listing.querySelector('[class*="title"]') ||
-//                 listing.querySelector('a');
-//             const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
-//             console.log(craigslist_title);
-//             const priceElement = listing.querySelector('.priceinfo') ||
-//                 listing.querySelector('[class*="price"]');
-//             const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
-//             console.log(craigslist_price);
-//             const linkElement = listing.querySelector('a.posting-title') ||
-//                 listing.querySelector('a');
-//             const craigslist_url = linkElement ? linkElement.href : 'N/A';
-//             console.log(craigslist_url);
-//             const imgElement = listing.querySelector('img');
-//             const craigslist_image = imgElement ? imgElement.src : 'N/A';
-
-//             results.push({
-//                 craigslist_title,
-//                 craigslist_price,
-//                 craigslist_image,
-//                 craigslist_url
-//             });
-//         });
-
-//         return results;
-//     });
-
-//     await browser.close();
-//     return listings;
-// }
+// Craigslist search function
 async function craigslistSearch(title, price) {
-    let browser;
-    try {
-        browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
+    const page = await browser.newPage();
+
+    const place = 'sfbay';
+    const minPrice = 1;
+    const maxPrice = price + 1000;
+
+    const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
+
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+
+    // Auto-scroll to load images
+    console.log("scrolling ebay...");
+    await page.evaluate(async () => {
+        await new Promise((resolve) => {
+            let totalHeight = 0;
+            const distance = 100;
+            const timer = setInterval(() => {
+                window.scrollBy(0, distance);
+                totalHeight += distance;
+
+                if (totalHeight >= 2000) {
+                    clearInterval(timer);
+                    resolve();
+                }
+            }, 100);
         });
+    });
 
-        const page = await browser.newPage();
-        
-        // Set viewport for consistent rendering
-        await page.setViewport({ width: 1280, height: 800 });
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-        const place = 'sfbay';
-        const minPrice = 0; // Include free items
-        const maxPrice = price + 1000;
+    const listings = await page.evaluate(() => {
+        const results = [];
 
-        const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}`;
-
-        console.log(`Searching Craigslist: ${url}`);
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-
-        // Auto-scroll to load images
-        console.log("Scrolling Craigslist to load images...");
-        await page.evaluate(async () => {
-            await new Promise((resolve) => {
-                let totalHeight = 0;
-                const distance = 100;
-                const maxScroll = document.body.scrollHeight;
-                const timer = setInterval(() => {
-                    window.scrollBy(0, distance);
-                    totalHeight += distance;
-
-                    // Stop when reaching bottom or 2000px
-                    if (totalHeight >= Math.min(maxScroll, 2000)) {
-                        clearInterval(timer);
-                        resolve();
-                    }
-                }, 100);
-            });
-        });
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const listings = await page.evaluate(() => {
-            const results = [];
-
-            // Try multiple selector strategies for current Craigslist layout
-            let listingElements = document.querySelectorAll('.cl-search-result, .result-row, .gallery-card, li.cl-static-search-result');
-            
-            if (listingElements.length === 0) {
-                return results; // Return empty if no listings found
-            }
-
-            const firstTen = Array.from(listingElements).slice(0, 10);
-
-            firstTen.forEach(listing => {
-                // Try multiple selector combinations for title
-                const titleElement = listing.querySelector('a.posting-title .label, .title, .titlestring, a.cl-app-anchor.text-only') ||
-                    listing.querySelector('a');
-                const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
-
-                // Try multiple selector combinations for price
-                const priceElement = listing.querySelector('.priceinfo, .price, .priceinfo .price, span.priceinfo');
-                const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
-
-                // Get URL
-                const linkElement = listing.querySelector('a.posting-title, a.cl-app-anchor') ||
-                    listing.querySelector('a[href*="/"]');
-                const craigslist_url = linkElement ? linkElement.href : 'N/A';
-
-                // Get image
-                const imgElement = listing.querySelector('img');
-                const craigslist_image = imgElement ? (imgElement.src || imgElement.dataset.src || 'N/A') : 'N/A';
-
-                results.push({
-                    craigslist_title,
-                    craigslist_price,
-                    craigslist_image,
-                    craigslist_url
-                });
-            });
-
-            return results;
-        });
-
-        console.log(`Found ${listings.length} listings`);
-        return listings;
-
-    } catch (error) {
-        console.error('Craigslist search error:', error.message);
-        throw error;
-    } finally {
-        if (browser) {
-            await browser.close();
+        let listingElements = document.querySelectorAll('.cl-search-result');
+        if (listingElements.length === 0) {
+            listingElements = document.querySelectorAll('[class*="result"]');
         }
-    }
+        if (listingElements.length === 0) {
+            listingElements = document.querySelectorAll('.gallery-card');
+        }
+
+        const firstTen = Array.from(listingElements).slice(0, 10);
+
+        firstTen.forEach(listing => {
+            const titleElement = listing.querySelector('a.posting-title .label') ||
+                listing.querySelector('[class*="title"]') ||
+                listing.querySelector('a');
+            const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
+            console.log(craigslist_title);
+            const priceElement = listing.querySelector('.priceinfo') ||
+                listing.querySelector('[class*="price"]');
+            const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
+            console.log(craigslist_price);
+            const linkElement = listing.querySelector('a.posting-title') ||
+                listing.querySelector('a');
+            const craigslist_url = linkElement ? linkElement.href : 'N/A';
+            console.log(craigslist_url);
+            const imgElement = listing.querySelector('img');
+            const craigslist_image = imgElement ? imgElement.src : 'N/A';
+
+            results.push({
+                craigslist_title,
+                craigslist_price,
+                craigslist_image,
+                craigslist_url
+            });
+        });
+
+        return results;
+    });
+
+    await browser.close();
+    return listings;
 }
 
 // API Routes
