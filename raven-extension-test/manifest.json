@@ -11,7 +11,10 @@
     "*://*.craigslist.org/*",
     "*://*.ebay.com/*",
     "*://www.facebook.com/*",
-    "*://*.workers.dev/*"
+    "*://*.workers.dev/*",
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*",
+    "http://5.78.73.172:3000/*"
   ],
   "action": {
     "default_title": "RAVEN - Find Similar Listings"
