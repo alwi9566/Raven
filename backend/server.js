@@ -21,8 +21,8 @@ app.use(cors({
 }));
 
 // Middleware
-//app.use(express.json({ limit: '50mb' }));
-//app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // eBay credentials
 const client_id = 'ElyCariv-Capstone-PRD-e0ddfec83-ca98af90';
