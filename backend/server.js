@@ -1,3 +1,4 @@
+//import node modules
 const express = require('express');
 const https = require('https');
 const http = require('http');
@@ -6,38 +7,42 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
+//store networking variables
 const app = express();
 const PORT = 3000;
 const HTTPS_PORT = 443;
 const HTTP_PORT = 80;
 
-// Enhanced CORS configuration for Chrome Extension
+//allows extension to access server api
 app.use(cors({
-    origin: '*', // Allow all origins (needed for Chrome extensions)
+    //allow all origins
+    origin: '*', 
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Middleware
-app.use(express.json({ limit: '50mb' })); // Increased limit for base64 images
+//set image size limit higher for higher resolution screens
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// eBay credentials
+// eBay credentials (scary)
 const client_id = 'ElyCariv-Capstone-PRD-e0ddfec83-ca98af90';
 const client_secret = 'PRD-0ddfec83f99c-91e5-417c-9e0c-1e5d';
 
 // OCR extraction function
-async function tesseractExtract(imagePath) {
+async function tesseractExtract(imagePath) { 
+
     const { createWorker } = require('tesseract.js');
+    //start worker
     const worker = await createWorker('eng');
-
+    //text extractrion
     const { data: { text } } = await worker.recognize(imagePath);
+    //kill worker
     await worker.terminate();
-
+    //isolate title, price, and condition
     const facebook_title = text.match(/^[^$]*/)[0].trim();
     const facebook_price = text.match(/\$\d+\.?\d*/g)[0];
     const facebook_condition = text.split(/Condition\s*(\S+)/)[1];
-
     return {
         facebook_title,
         facebook_price,
@@ -48,16 +53,18 @@ async function tesseractExtract(imagePath) {
 // Generate eBay OAuth token
 async function generateToken() {
     const credentials = Buffer.from(`${client_id}:${client_secret}`).toString('base64');
-
+    //make fetch request
     const token_response = await fetch("https://api.ebay.com/identity/v1/oauth2/token", {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            //include credentials
             "Authorization": `Basic ${credentials}`
         },
+        //set permissions scope for token
         body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
     });
-
+    //store as json object
     const token = await token_response.json();
     return token.access_token;
 }
@@ -107,7 +114,8 @@ async function craigslistSearch(title, price) {
 
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
-    // Auto-scroll to load images
+    //scroll to load lazy images
+    console.log("Scrolling Craigslist...");
     await page.evaluate(async () => {
         await new Promise((resolve) => {
             let totalHeight = 0;
@@ -144,15 +152,15 @@ async function craigslistSearch(title, price) {
                 listing.querySelector('[class*="title"]') ||
                 listing.querySelector('a');
             const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
-
+            console.log(craigslist_title);
             const priceElement = listing.querySelector('.priceinfo') ||
                 listing.querySelector('[class*="price"]');
             const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
-
+            console.log(craigslist_price);
             const linkElement = listing.querySelector('a.posting-title') ||
                 listing.querySelector('a');
             const craigslist_url = linkElement ? linkElement.href : 'N/A';
-
+            console.log(craigslist_url);
             const imgElement = listing.querySelector('img');
             const craigslist_image = imgElement ? imgElement.src : 'N/A';
 
@@ -168,50 +176,58 @@ async function craigslistSearch(title, price) {
     });
 
     await browser.close();
+    console.log(`Listings: ${listings}`);
     return listings;
 }
 
-// API Routes
-
-// Health check endpoint
+//check if server responds
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Raven server is running' });
+    res.json({ status: 'ok', message: 'Server is online' });
 });
 
-// Main search endpoint
+//main api endpoint
 app.post('/api/search', async (req, res) => {
     try {
-        console.log('[SERVER] Received search request');
+        console.log('Server recieved request');
         const { imageData } = req.body;
 
-        if (!imageData) {
-            console.log('[SERVER] No image data provided');
-            return res.status(400).json({ error: 'No image data provided' });
-        }
+        // if (!imageData) {
+        //     console.log('[SERVER] No image data provided');
+        //     return res.status(400).json({ error: 'No image data provided' });
+        // }
 
-        // Save base64 image to temporary file
+        //save image to temp file
         const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
         const tempPath = path.join(__dirname, 'temp_screenshot.png');
         fs.writeFileSync(tempPath, buffer);
-
-        console.log('[SERVER] Extracting text from image...');
+        
+        //call tesseract
+        console.log('\nExtracting text...');
         const { facebook_title, facebook_price, facebook_condition } = await tesseractExtract(tempPath);
 
-        console.log('[SERVER] Extracted:', { facebook_title, facebook_price, facebook_condition });
+        //console logs for debugging
+        console.log(`Title: ${facebook_title}`);
+        console.log(`Price: ${facebook_price}`);
+        console.log(`Condition: ${facebook_condition}`);
 
+        //remove dollar signs from price
         const numericPrice = parseInt(facebook_price.replace(/\$/g, '').replace(/,/g, ''));
 
-        console.log('[SERVER] Searching eBay...');
+        //call ebaySearch
+        console.log('\nSearching eBay...');
         const ebayResults = await ebaySearch(facebook_title, numericPrice, facebook_condition, 10);
+        console.log(`eBay Results: ${ebayResults}`);
 
-        console.log('[SERVER] Searching Craigslist...');
+        //call craigslistSearch
+        console.log('\nSearching Craigslist...');
         const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
+        console.log(`Craigslist Results: ${craigslistResults}`);
 
-        // Clean up temp file
+        //delete temp image
         fs.unlinkSync(tempPath);
 
-        // Return results
+        //return results as json
         res.json({
             success: true,
             extracted: {
@@ -234,36 +250,36 @@ app.post('/api/search', async (req, res) => {
     }
 });
 
-// Separate endpoint for just OCR extraction
-app.post('/api/extract', async (req, res) => {
-    try {
-        const { imageData } = req.body;
+// Separate endpoint for just OCR extraction (might be able to delete!!!!!!!!!!!!)
+// app.post('/api/extract', async (req, res) => {
+//     try {
+//         const { imageData } = req.body;
 
-        if (!imageData) {
-            return res.status(400).json({ error: 'No image data provided' });
-        }
+//         if (!imageData) {
+//             return res.status(400).json({ error: 'No image data provided' });
+//         }
 
-        const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-        const tempPath = path.join(__dirname, 'temp_screenshot.png');
-        fs.writeFileSync(tempPath, buffer);
+//         const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+//         const buffer = Buffer.from(base64Data, 'base64');
+//         const tempPath = path.join(__dirname, 'temp_screenshot.png');
+//         fs.writeFileSync(tempPath, buffer);
 
-        const extracted = await tesseractExtract(tempPath);
-        fs.unlinkSync(tempPath);
+//         const extracted = await tesseractExtract(tempPath);
+//         fs.unlinkSync(tempPath);
 
-        res.json({
-            success: true,
-            extracted
-        });
+//         res.json({
+//             success: true,
+//             extracted
+//         });
 
-    } catch (error) {
-        console.error('[SERVER] Error extracting text:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
+//     } catch (error) {
+//         console.error('[SERVER] Error extracting text:', error);
+//         res.status(500).json({
+//             success: false,
+//             error: error.message
+//         });
+//     }
+// });
 
 // SSL Certificate Configuration
 const sslOptions = {
@@ -271,24 +287,9 @@ const sslOptions = {
     cert: fs.readFileSync('/etc/letsencrypt/live/www.ravenextension.com/fullchain.pem')
 };
 
-// Create HTTPS server
+//start https server
 https.createServer(sslOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
-    console.log(`[SERVER] HTTPS Raven server running on https://www.ravenextension.com:${HTTPS_PORT}`);
-    console.log(`[SERVER] Health check: https://www.ravenextension.com:${HTTPS_PORT}/health`);
-    console.log(`[SERVER] API endpoint: https://www.ravenextension.com:${HTTPS_PORT}/api/search`);
-});
-
-// Create HTTP server that redirects to HTTPS
-http.createServer((req, res) => {
-    res.writeHead(301, { 
-        Location: `https://${req.headers.host.replace(':80', '')}${req.url}` 
-    });
-    res.end();
-}).listen(HTTP_PORT, '0.0.0.0', () => {
-    console.log(`[SERVER] HTTP server running on port ${HTTP_PORT} (redirecting to HTTPS)`);
-});
-
-// Keep the original HTTP server on port 3000 for backward compatibility (optional)
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[SERVER] Development server still running on http://0.0.0.0:${PORT}`);
+    console.log(`\nServer running on https://www.ravenextension.com:${HTTPS_PORT}`);
+    console.log(`Health check: https://www.ravenextension.com:${HTTPS_PORT}/health`);
+    console.log(`API: https://www.ravenextension.com:${HTTPS_PORT}/api/search`);
 });
