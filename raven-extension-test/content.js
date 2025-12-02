@@ -5,8 +5,8 @@
   let selectedListing = null
 
   // Express server URL (update this to match your server location)
-  const SERVER_URL = 'http://localhost:3000/api/search'
-  const TESTING_MODE = false // Set to false when ready to connect to server
+  const SERVER_URL = 'http://5.78.73.172:3000/api/search'
+  const TESTING_MODE = false // Set to true for testing screenshots only
 
   // Facebook Marketplace crop coordinates
   const FACEBOOK_CROP = {
@@ -33,6 +33,13 @@
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('[RAVEN] Content script received message:', message);
     
+    // Respond to ping (health check)
+    if (message.action === 'ping') {
+      sendResponse({ success: true, loaded: true });
+      return true;
+    }
+    
+    // Handle screenshot processing
     if (message.action === 'processScreenshot') {
       handleScreenshotFromBackground(message.screenshot, message.url);
       sendResponse({ success: true });
@@ -150,6 +157,7 @@
     try {
       console.log('[RAVEN] Fetching backend data...');
       console.log('[RAVEN] TESTING_MODE:', TESTING_MODE);
+      console.log('[RAVEN] SERVER_URL:', SERVER_URL);
 
       // In testing mode, don't call server
       if (TESTING_MODE) {
@@ -170,29 +178,64 @@
         imageData: testScreenshots.cropped
       };
 
-      console.log('[RAVEN] Sending to server...');
-      const response = await fetch(SERVER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
+      console.log('[RAVEN] Request body size:', JSON.stringify(requestBody).length, 'bytes');
+      console.log('[RAVEN] Sending to server at:', SERVER_URL);
 
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
+      // Add timeout to fetch
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      try {
+        const response = await fetch(SERVER_URL, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        console.log('[RAVEN] Server response status:', response.status);
+        console.log('[RAVEN] Server response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[RAVEN] Server error response:', errorText);
+          throw new Error(`Server responded with ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('[RAVEN] Server response data:', data);
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Server processing failed');
+        }
+
+        console.log('[RAVEN] Received data from server successfully');
+        const transformedData = transformServerResponse(data);
+        backendData = transformedData;
+
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Request timed out after 30 seconds');
+        }
+        throw fetchError;
       }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Server processing failed');
-      }
-
-      console.log('[RAVEN] Received data from server:', data);
-      const transformedData = transformServerResponse(data);
-      backendData = transformedData;
 
     } catch (error) {
       console.error("[RAVEN] Backend fetch error:", error);
+      console.error("[RAVEN] Error name:", error.name);
+      console.error("[RAVEN] Error message:", error.message);
+      console.error("[RAVEN] Error stack:", error.stack);
+      
+      // Show error to user
+      showError(`Failed to connect to server: ${error.message}`);
+      
       backendData = {
         all: { count: 0, avgPrice: "$0.00", listings: [] },
         craigslist: { count: 0, avgPrice: "$0.00", listings: [] },
