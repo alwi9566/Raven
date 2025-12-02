@@ -88,13 +88,17 @@ async function ebaySearch(title, price, condition, limit) {
 
 // Craigslist search function
 async function craigslistSearch(title, price) {
+    
+    // Launch a headless Chromium browser instance with security flags
     const browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
+    // Creates a new browser tab
     const page = await browser.newPage();
 
+    // Defines search 
     const place = 'sfbay';
     const minPrice = 1;
     const maxPrice = price + 1000;
