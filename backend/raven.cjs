@@ -88,7 +88,7 @@ async function craigslistSearch(title, price){
     const browser = await puppeteer.launch({ 
         browser: "firefox",
         //change to headless for showcase 
-        headless: false,
+        headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
