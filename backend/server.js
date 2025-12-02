@@ -1,3 +1,4 @@
+//import node modules
 const express = require('express');
 const https = require('https');
 const http = require('http');
@@ -11,16 +12,17 @@ const PORT = 3000;
 const HTTPS_PORT = 443;
 const HTTP_PORT = 80;
 
-// Enhanced CORS configuration for Chrome Extension
+//allows extension to access server api
 app.use(cors({
-    origin: '*', // Allow all origins (needed for Chrome extensions)
+    //allow all origins
+    origin: '*', 
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware
-app.use(express.json({ limit: '50mb' })); // Increased limit for base64 images
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+//app.use(express.json({ limit: '50mb' }));
+//app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // eBay credentials
 const client_id = 'ElyCariv-Capstone-PRD-e0ddfec83-ca98af90';
