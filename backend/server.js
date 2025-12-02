@@ -198,7 +198,7 @@ app.post('/api/search', async (req, res) => {
         fs.writeFileSync(tempPath, buffer);
         
         //call tesseract
-        console.log('Extracting text...');
+        console.log('\nExtracting text...');
         const { facebook_title, facebook_price, facebook_condition } = await tesseractExtract(tempPath);
 
         //console logs for debugging
@@ -217,7 +217,7 @@ app.post('/api/search', async (req, res) => {
         //call craigslistSearch
         console.log('\nSearching Craigslist...');
         const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
-        console.log(`Craigslit Results: ${craigslistResults}`);
+        console.log(`Craigslist Results: ${craigslistResults}`);
 
         //delete temp image
         fs.unlinkSync(tempPath);
@@ -284,7 +284,7 @@ const sslOptions = {
 
 //start https server
 https.createServer(sslOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
-    console.log(`Server running on https://www.ravenextension.com:${HTTPS_PORT}`);
+    console.log(`\nServer running on https://www.ravenextension.com:${HTTPS_PORT}`);
     console.log(`Health check: https://www.ravenextension.com:${HTTPS_PORT}/health`);
     console.log(`API: https://www.ravenextension.com:${HTTPS_PORT}/api/search`);
 });
