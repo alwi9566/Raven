@@ -265,3 +265,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`[SERVER] API endpoint: http://5.78.73.172:${PORT}/api/search`);
     console.log(`[SERVER] CORS enabled for all origins`);
 });
+
+app.listen(80, () =>{
+
+});
