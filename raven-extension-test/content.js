@@ -4,9 +4,9 @@
   let currentView = "list"
   let selectedListing = null
 
-  // Your Cloudflare Worker URL
-  const WORKER_URL = 'http://5.78.73.172:3000'
-  const TESTING_MODE = false // Set to false when ready to connect to Worker
+  // Express server URL (update this to match your server location)
+  const SERVER_URL = 'http://localhost:3000/api/search'
+  const TESTING_MODE = false // Set to false when ready to connect to server
 
   // Facebook Marketplace crop coordinates
   const FACEBOOK_CROP = {
@@ -144,20 +144,16 @@
   }
 
   /**
-   * Fetches backend data
+   * Fetches backend data from Express server
    */
   async function fetchBackendData(pageUrl) {
     try {
-      const isMarketplace = pageUrl.includes("facebook.com/marketplace");
-      const isCraigslist = pageUrl.includes("craigslist.org");
-      const isEbay = pageUrl.includes("ebay.com");
-      
       console.log('[RAVEN] Fetching backend data...');
       console.log('[RAVEN] TESTING_MODE:', TESTING_MODE);
 
-      // In testing mode, don't call Worker
+      // In testing mode, don't call server
       if (TESTING_MODE) {
-        console.log('[RAVEN] TESTING MODE: Skipping Worker connection');
+        console.log('[RAVEN] TESTING MODE: Skipping server connection');
         console.log('[RAVEN] Original screenshot size:', testScreenshots.original?.length || 0, 'bytes');
         console.log('[RAVEN] Cropped screenshot size:', testScreenshots.cropped?.length || 0, 'bytes');
         
@@ -169,32 +165,30 @@
         return;
       }
 
-      // Production mode - call Worker
-      let requestBody = {
-        url: pageUrl,
-        source: isMarketplace ? 'facebook_marketplace' : isCraigslist ? 'craigslist' : 'ebay',
-        screenshot: testScreenshots.cropped
+      // Production mode - call Express server
+      const requestBody = {
+        imageData: testScreenshots.cropped
       };
 
-      console.log('[RAVEN] Sending to Worker...');
-      const response = await fetch(WORKER_URL, {
+      console.log('[RAVEN] Sending to server...');
+      const response = await fetch(SERVER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        throw new Error(`Worker responded with ${response.status}`);
+        throw new Error(`Server responded with ${response.status}`);
       }
 
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.error || 'Worker processing failed');
+        throw new Error(data.error || 'Server processing failed');
       }
 
-      console.log('[RAVEN] Received data from Worker:', data);
-      const transformedData = transformWorkerResponse(data);
+      console.log('[RAVEN] Received data from server:', data);
+      const transformedData = transformServerResponse(data);
       backendData = transformedData;
 
     } catch (error) {
@@ -208,10 +202,11 @@
   }
 
   /**
-   * Transforms Worker response format to match UI expectations
+   * Transforms server response format to match UI expectations
    */
-  function transformWorkerResponse(workerData) {
-    const ebayListings = (workerData.ebay_results || []).map(item => ({
+  function transformServerResponse(serverData) {
+    // Extract eBay listings
+    const ebayListings = (serverData.results?.ebay || []).map(item => ({
       image: item.ebay_imageUrl || 'https://via.placeholder.com/150',
       price: item.ebay_price || 'N/A',
       title: item.ebay_title || 'Untitled',
@@ -219,8 +214,9 @@
       platform: 'ebay'
     }));
 
-    const craigslistListings = (workerData.craigslist_results || []).map(item => ({
-      image: 'https://via.placeholder.com/150',
+    // Extract Craigslist listings
+    const craigslistListings = (serverData.results?.craigslist || []).map(item => ({
+      image: item.craigslist_image || 'https://via.placeholder.com/150',
       price: item.craigslist_price || 'N/A',
       title: item.craigslist_title || 'Untitled',
       url: item.craigslist_url || '#',
@@ -351,7 +347,7 @@
           <div style="color: #ffffff; font-size: 12px; line-height: 1.6;">
             1. Verify the cropped region captures title, price, and condition<br>
             2. Adjust coordinates in content.js if needed<br>
-            3. Set TESTING_MODE = false to enable Worker connection
+            3. Set TESTING_MODE = false to enable server connection
           </div>
         </div>
       </div>
