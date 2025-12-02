@@ -53,6 +53,8 @@
    */
   async function handleScreenshotFromBackground(screenshotDataUrl, pageUrl) {
     console.log('[RAVEN] Received screenshot from background, processing...');
+    console.log('[RAVEN] Screenshot size:', screenshotDataUrl?.length || 0, 'bytes');
+    console.log('[RAVEN] Page URL:', pageUrl);
     
     // Show loading overlay
     if (overlay) {
@@ -74,20 +76,30 @@
         console.log('[RAVEN] Facebook Marketplace detected, cropping...');
         const croppedScreenshot = await cropScreenshot(screenshotDataUrl);
         testScreenshots.cropped = croppedScreenshot;
-        console.log('[RAVEN] Screenshot cropped successfully');
+        console.log('[RAVEN] Screenshot cropped successfully, size:', croppedScreenshot?.length || 0, 'bytes');
       } else {
         testScreenshots.cropped = screenshotDataUrl; // Use full screenshot for other sites
+        console.log('[RAVEN] Using full screenshot (not Facebook Marketplace)');
       }
 
       // Fetch backend data
+      console.log('[RAVEN] Starting backend data fetch...');
       await fetchBackendData(pageUrl);
+      console.log('[RAVEN] Backend data fetch completed');
       
       // Show results
       showContent();
 
     } catch (error) {
       console.error('[RAVEN] Error processing screenshot:', error);
-      showError(error.message);
+      console.error('[RAVEN] Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Error already shown by fetchBackendData, just log here
+      // Don't call showError again to avoid duplicate error displays
     }
   }
 
@@ -158,6 +170,7 @@
       console.log('[RAVEN] Fetching backend data...');
       console.log('[RAVEN] TESTING_MODE:', TESTING_MODE);
       console.log('[RAVEN] SERVER_URL:', SERVER_URL);
+      console.log('[RAVEN] Page URL:', pageUrl);
 
       // In testing mode, don't call server
       if (TESTING_MODE) {
@@ -173,20 +186,31 @@
         return;
       }
 
+      // Check if screenshot exists
+      if (!testScreenshots.cropped) {
+        throw new Error('No screenshot data available');
+      }
+
       // Production mode - call Express server
       const requestBody = {
         imageData: testScreenshots.cropped
       };
 
       console.log('[RAVEN] Request body size:', JSON.stringify(requestBody).length, 'bytes');
-      console.log('[RAVEN] Sending to server at:', SERVER_URL);
+      console.log('[RAVEN] Screenshot data starts with:', testScreenshots.cropped.substring(0, 50));
+      console.log('[RAVEN] Sending POST request to:', SERVER_URL);
 
       // Add timeout to fetch
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => {
+        console.error('[RAVEN] Request timeout after 60 seconds');
+        controller.abort();
+      }, 60000); // 60 second timeout
 
+      let response;
       try {
-        const response = await fetch(SERVER_URL, {
+        console.log('[RAVEN] Initiating fetch...');
+        response = await fetch(SERVER_URL, {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
@@ -197,35 +221,50 @@
         });
 
         clearTimeout(timeoutId);
-
-        console.log('[RAVEN] Server response status:', response.status);
-        console.log('[RAVEN] Server response headers:', Object.fromEntries(response.headers.entries()));
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[RAVEN] Server error response:', errorText);
-          throw new Error(`Server responded with ${response.status}: ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log('[RAVEN] Server response data:', data);
-        
-        if (!data.success) {
-          throw new Error(data.error || 'Server processing failed');
-        }
-
-        console.log('[RAVEN] Received data from server successfully');
-        const transformedData = transformServerResponse(data);
-        backendData = transformedData;
+        console.log('[RAVEN] Fetch completed');
 
       } catch (fetchError) {
         clearTimeout(timeoutId);
         
+        console.error('[RAVEN] Fetch failed:', fetchError);
+        console.error('[RAVEN] Error type:', fetchError.constructor.name);
+        console.error('[RAVEN] Error name:', fetchError.name);
+        
         if (fetchError.name === 'AbortError') {
-          throw new Error('Request timed out after 30 seconds');
+          throw new Error('Request timed out after 60 seconds. Server may be processing or unreachable.');
         }
+        
+        if (fetchError.message.includes('Failed to fetch')) {
+          throw new Error('Cannot connect to server at ' + SERVER_URL + '. Check if server is running and accessible.');
+        }
+        
         throw fetchError;
       }
+
+      console.log('[RAVEN] Server response status:', response.status);
+      console.log('[RAVEN] Server response ok:', response.ok);
+      console.log('[RAVEN] Server response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[RAVEN] Server error response:', errorText);
+        throw new Error(`Server responded with ${response.status}: ${errorText}`);
+      }
+
+      console.log('[RAVEN] Parsing JSON response...');
+      const data = await response.json();
+      console.log('[RAVEN] Server response data:', data);
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Server processing failed');
+      }
+
+      console.log('[RAVEN] Received data from server successfully');
+      console.log('[RAVEN] eBay results:', data.results?.ebay?.length || 0);
+      console.log('[RAVEN] Craigslist results:', data.results?.craigslist?.length || 0);
+      
+      const transformedData = transformServerResponse(data);
+      backendData = transformedData;
 
     } catch (error) {
       console.error("[RAVEN] Backend fetch error:", error);
@@ -233,14 +272,21 @@
       console.error("[RAVEN] Error message:", error.message);
       console.error("[RAVEN] Error stack:", error.stack);
       
-      // Show error to user
-      showError(`Failed to connect to server: ${error.message}`);
+      // Show error to user with helpful message
+      let errorMessage = error.message;
+      if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Cannot connect to server. Please check:\n1. Server is running at ' + SERVER_URL + '\n2. Server firewall allows connections\n3. Network connection is stable';
+      }
+      
+      showError(errorMessage);
       
       backendData = {
         all: { count: 0, avgPrice: "$0.00", listings: [] },
         craigslist: { count: 0, avgPrice: "$0.00", listings: [] },
         ebay: { count: 0, avgPrice: "$0.00", listings: [] },
       };
+      
+      throw error; // Re-throw so handleScreenshotFromBackground can catch it
     }
   }
 
