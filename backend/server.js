@@ -7,8 +7,18 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
+// Enhanced CORS configuration for Chrome Extension
+app.use(cors({
+    origin: '*', // Allow all origins (needed for Chrome extensions)
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
 // Middleware
-app.use(cors());
 app.use(express.json({ limit: '50mb' })); // Increased limit for base64 images
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -167,9 +177,11 @@ app.get('/health', (req, res) => {
 // Main search endpoint
 app.post('/api/search', async (req, res) => {
     try {
+        console.log('[SERVER] Received search request');
         const { imageData } = req.body;
 
         if (!imageData) {
+            console.log('[SERVER] No image data provided');
             return res.status(400).json({ error: 'No image data provided' });
         }
 
@@ -179,17 +191,17 @@ app.post('/api/search', async (req, res) => {
         const tempPath = path.join(__dirname, 'temp_screenshot.png');
         fs.writeFileSync(tempPath, buffer);
 
-        console.log('Extracting text from image...');
+        console.log('[SERVER] Extracting text from image...');
         const { facebook_title, facebook_price, facebook_condition } = await tesseractExtract(tempPath);
 
-        console.log('Extracted:', { facebook_title, facebook_price, facebook_condition });
+        console.log('[SERVER] Extracted:', { facebook_title, facebook_price, facebook_condition });
 
         const numericPrice = parseInt(facebook_price.replace(/\$/g, '').replace(/,/g, ''));
 
-        console.log('Searching eBay...');
+        console.log('[SERVER] Searching eBay...');
         const ebayResults = await ebaySearch(facebook_title, numericPrice, facebook_condition, 10);
 
-        console.log('Searching Craigslist...');
+        console.log('[SERVER] Searching Craigslist...');
         const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
 
         // Clean up temp file
@@ -210,7 +222,7 @@ app.post('/api/search', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error processing search:', error);
+        console.error('[SERVER] Error processing search:', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -241,7 +253,7 @@ app.post('/api/extract', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error extracting text:', error);
+        console.error('[SERVER] Error extracting text:', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -250,8 +262,9 @@ app.post('/api/extract', async (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Raven server running on http://localhost:${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/health`);
-    console.log(`API endpoint: http://localhost:${PORT}/api/search`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[SERVER] Raven server running on http://localhost:${PORT}`);
+    console.log(`[SERVER] Health check: http://localhost:${PORT}/health`);
+    console.log(`[SERVER] API endpoint: http://localhost:${PORT}/api/search`);
+    console.log(`[SERVER] CORS enabled for all origins`);
 });
