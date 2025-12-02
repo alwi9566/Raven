@@ -30,7 +30,8 @@ const client_id = 'ElyCariv-Capstone-PRD-e0ddfec83-ca98af90';
 const client_secret = 'PRD-0ddfec83f99c-91e5-417c-9e0c-1e5d';
 
 // OCR extraction function
-async function tesseractExtract(imagePath) {
+async function tesseractExtract(imagePath) { 
+
     const { createWorker } = require('tesseract.js');
     //start worker
     const worker = await createWorker('eng');
@@ -174,49 +175,54 @@ async function craigslistSearch(title, price) {
     return listings;
 }
 
-// API Routes
-
-// Health check endpoint
+//check if server responds
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Raven server is running' });
+    res.json({ status: 'ok', message: 'Server is online' });
 });
 
-// Main search endpoint
+//main api endpoint
 app.post('/api/search', async (req, res) => {
     try {
-        console.log('[SERVER] Received search request');
+        console.log('Server recieved request');
         const { imageData } = req.body;
 
-        if (!imageData) {
-            console.log('[SERVER] No image data provided');
-            return res.status(400).json({ error: 'No image data provided' });
-        }
+        // if (!imageData) {
+        //     console.log('[SERVER] No image data provided');
+        //     return res.status(400).json({ error: 'No image data provided' });
+        // }
 
-        // Save base64 image to temporary file
+        //save image to temp file
         const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
         const tempPath = path.join(__dirname, 'temp_screenshot.png');
         fs.writeFileSync(tempPath, buffer);
-
-        console.log('[SERVER] Extracting text from image...');
+        
+        //call tesseract
+        console.log('Extracting text...');
         const { facebook_title, facebook_price, facebook_condition } = await tesseractExtract(tempPath);
 
-        console.log('[SERVER] Extracted:', { facebook_title, facebook_price, facebook_condition });
+        //console logs for debugging
+        console.log(`Title: ${facebook_title}`);
+        console.log(`Price: ${facebook_price}`);
+        console.log(`Condition: ${facebook_condition}`);
 
+        //remove dollar signs from price
         const numericPrice = parseInt(facebook_price.replace(/\$/g, '').replace(/,/g, ''));
 
-        console.log('[SERVER] Searching eBay...');
+        //call ebaySearch
+        console.log('\nSearching eBay...');
         const ebayResults = await ebaySearch(facebook_title, numericPrice, facebook_condition, 10);
-        //console.log(ebayResults);
+        console.log(`eBay Results: ${ebayResults}`);
 
-        console.log('[SERVER] Searching Craigslist...');
+        //call craigslistSearch
+        console.log('\nSearching Craigslist...');
         const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
-        console.log(craigslistResults);
+        console.log(`Craigslit Results: ${craigslistResults}`);
 
-        // Clean up temp file
+        //delete temp image
         fs.unlinkSync(tempPath);
 
-        // Return results
+        //return results as json
         res.json({
             success: true,
             extracted: {
@@ -239,36 +245,36 @@ app.post('/api/search', async (req, res) => {
     }
 });
 
-// Separate endpoint for just OCR extraction
-app.post('/api/extract', async (req, res) => {
-    try {
-        const { imageData } = req.body;
+// Separate endpoint for just OCR extraction (might be able to delete!!!!!!!!!!!!)
+// app.post('/api/extract', async (req, res) => {
+//     try {
+//         const { imageData } = req.body;
 
-        if (!imageData) {
-            return res.status(400).json({ error: 'No image data provided' });
-        }
+//         if (!imageData) {
+//             return res.status(400).json({ error: 'No image data provided' });
+//         }
 
-        const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-        const tempPath = path.join(__dirname, 'temp_screenshot.png');
-        fs.writeFileSync(tempPath, buffer);
+//         const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+//         const buffer = Buffer.from(base64Data, 'base64');
+//         const tempPath = path.join(__dirname, 'temp_screenshot.png');
+//         fs.writeFileSync(tempPath, buffer);
 
-        const extracted = await tesseractExtract(tempPath);
-        fs.unlinkSync(tempPath);
+//         const extracted = await tesseractExtract(tempPath);
+//         fs.unlinkSync(tempPath);
 
-        res.json({
-            success: true,
-            extracted
-        });
+//         res.json({
+//             success: true,
+//             extracted
+//         });
 
-    } catch (error) {
-        console.error('[SERVER] Error extracting text:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
+//     } catch (error) {
+//         console.error('[SERVER] Error extracting text:', error);
+//         res.status(500).json({
+//             success: false,
+//             error: error.message
+//         });
+//     }
+// });
 
 // SSL Certificate Configuration
 const sslOptions = {
@@ -276,11 +282,11 @@ const sslOptions = {
     cert: fs.readFileSync('/etc/letsencrypt/live/www.ravenextension.com/fullchain.pem')
 };
 
-// Create HTTPS server
+//start https server
 https.createServer(sslOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
-    console.log(`[SERVER] HTTPS Raven server running on https://www.ravenextension.com:${HTTPS_PORT}`);
-    console.log(`[SERVER] Health check: https://www.ravenextension.com:${HTTPS_PORT}/health`);
-    console.log(`[SERVER] API endpoint: https://www.ravenextension.com:${HTTPS_PORT}/api/search`);
+    console.log(`Server running on https://www.ravenextension.com:${HTTPS_PORT}`);
+    console.log(`Health check: https://www.ravenextension.com:${HTTPS_PORT}/health`);
+    console.log(`API: https://www.ravenextension.com:${HTTPS_PORT}/api/search`);
 });
 
 // Create HTTP server that redirects to HTTPS (maybe get rid of this!!!!!!!!!!!!!!!)
@@ -291,9 +297,4 @@ http.createServer((req, res) => {
     res.end();
 }).listen(HTTP_PORT, '0.0.0.0', () => {
     console.log(`[SERVER] HTTP server running on port ${HTTP_PORT} (redirecting to HTTPS)`);
-});
-
-// Keep the original HTTP server on port 3000 for backward compatibility (optional)
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[SERVER] Development server still running on http://0.0.0.0:${PORT}`);
 });
