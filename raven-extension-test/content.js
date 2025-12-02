@@ -6,17 +6,24 @@
 
   // Express server URL (update this to match your server location)
   const SERVER_URL = 'https://ravenextension.com:443/api/search'
-  const TESTING_MODE = false // Set to true for testing screenshots only
+  const TESTING_MODE = true // Set to true for testing screenshots only
 
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const window_width = window.innerWidth;
+  const window_height = window.innerHeight;
   // Facebook Marketplace crop coordinates
+  // const FACEBOOK_CROP = {
+  //   yStart: 5,
+  //   yEnd: 45,
+  //   xStart: 86,
+  //   xEnd: 100
+  // }
+
   const FACEBOOK_CROP = {
-    yStart: 5,
-    yEnd: 45,
-    xStart: 86,
-    xEnd: 100
-  }
+    x: window.innerWidth - window.innerWidth / 7.25,
+    y: 0 + window.innerHeight / 20,
+    width: window.innerWidth / 7.25,
+    height: window.innerHeight - window.innerHeight / 5.25
+    }
 
   let backendData = {
     all: { count: 0, avgPrice: "$0.00", listings: [] },
@@ -79,6 +86,7 @@
         const croppedScreenshot = await cropScreenshot(screenshotDataUrl);
         testScreenshots.cropped = croppedScreenshot;
         console.log('[RAVEN] Screenshot cropped successfully, size:', croppedScreenshot?.length || 0, 'bytes');
+        console.log(testScreenshots.cropped);
       } else {
         testScreenshots.cropped = screenshotDataUrl; // Use full screenshot for other sites
         console.log('[RAVEN] Using full screenshot (not Facebook Marketplace)');
@@ -105,65 +113,131 @@
     }
   }
 
+async function cropScreenshot(screenshotDataURL) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        
+        console.log('[RAVEN] Original canvas size:', canvas.width, 'x', canvas.height);
+        
+        const croppedCanvas = cropRegionByCoordinates(
+          canvas,
+          FACEBOOK_CROP.x,      // left x coordinate
+          FACEBOOK_CROP.y,      // top y coordinate
+          FACEBOOK_CROP.width,  // width in pixels
+          FACEBOOK_CROP.height  // height in pixels
+        );
+        
+        console.log('[RAVEN] Cropped canvas size:', croppedCanvas.width, 'x', croppedCanvas.height);
+        
+        const croppedDataURL = croppedCanvas.toDataURL('image/png');
+        resolve(croppedDataURL);
+      } catch (error) {
+        console.error('[RAVEN] Cropping error:', error);
+        reject(error);
+      }
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load screenshot image'));
+    img.src = screenshotDataURL;
+  });
+}
+
+function cropRegionByCoordinates(canvas, x, y, width, height) {
+  const croppedCanvas = document.createElement('canvas');
+  croppedCanvas.width = width;
+  croppedCanvas.height = height;
+  
+  const ctx = croppedCanvas.getContext('2d');
+  ctx.drawImage(
+    canvas,
+    x, y, width, height,  // source rectangle
+    0, 0, width, height   // destination rectangle
+  );
+  
+  return croppedCanvas;
+}
   /**
    * Crops a region from a canvas based on percentage coordinates
    */
-  function cropRegion(canvas, yStart, yEnd, xStart, xEnd) {
-    const y1 = Math.floor((yStart / 100) * canvas.height);
-    const y2 = Math.floor((yEnd / 100) * canvas.height);
-    const x1 = Math.floor((xStart / 100) * canvas.width);
-    const x2 = Math.floor((xEnd / 100) * canvas.width);
+  // function cropRegion(canvas, yStart, yEnd, xStart, xEnd) {
+  //   const y1 = Math.floor((yStart / 100) * canvas.height);
+  //   const y2 = Math.floor((yEnd / 100) * canvas.height);
+  //   const x1 = Math.floor((xStart / 100) * canvas.width);
+  //   const x2 = Math.floor((xEnd / 100) * canvas.width);
     
-    const cropped = document.createElement('canvas');
-    cropped.width = x2 - x1;
-    cropped.height = y2 - y1;
+  //   const cropped = document.createElement('canvas');
+  //   cropped.width = x2 - x1;
+  //   cropped.height = y2 - y1;
     
-    const ctx = cropped.getContext('2d');
-    ctx.drawImage(canvas, x1, y1, cropped.width, cropped.height, 0, 0, cropped.width, cropped.height);
+  //   const ctx = cropped.getContext('2d');
+  //   ctx.drawImage(canvas, x1, y1, cropped.width, cropped.height, 0, 0, cropped.width, cropped.height);
     
-    return cropped;
-  }
+  //   return cropped;
+  // }
 
-  /**
-   * Converts screenshot data URL to cropped image
-   */
-  async function cropScreenshot(screenshotDataURL) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
+  // /**
+  //  * Converts screenshot data URL to cropped image
+  //  */
+  // async function cropScreenshot(screenshotDataURL) {
+  //   return new Promise((resolve, reject) => {
+  //     const img = new Image();
+  //     img.crossOrigin = 'anonymous';
       
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          canvas.getContext('2d').drawImage(img, 0, 0);
+  //     img.onload = () => {
+  //       try {
+  //         const canvas = document.createElement('canvas');
+  //         canvas.width = img.width;
+  //         canvas.height = img.height;
+  //         canvas.getContext('2d').drawImage(img, 0, 0);
           
-          console.log('[RAVEN] Original canvas size:', canvas.width, 'x', canvas.height);
+  //         console.log('[RAVEN] Original canvas size:', canvas.width, 'x', canvas.height);
           
-          const croppedCanvas = cropRegion(
-            canvas,
-            FACEBOOK_CROP.yStart,
-            FACEBOOK_CROP.yEnd,
-            FACEBOOK_CROP.xStart,
-            FACEBOOK_CROP.xEnd
-          );
+  //         const croppedCanvas = cropRegion(
+  //           canvas,
+  //           FACEBOOK_CROP.yStart,
+  //           FACEBOOK_CROP.yEnd,
+  //           FACEBOOK_CROP.xStart,
+  //           FACEBOOK_CROP.xEnd
+  //         );
           
-          console.log('[RAVEN] Cropped canvas size:', croppedCanvas.width, 'x', croppedCanvas.height);
+  //         console.log('[RAVEN] Cropped canvas size:', croppedCanvas.width, 'x', croppedCanvas.height);
           
-          const croppedDataURL = croppedCanvas.toDataURL('image/png');
-          resolve(croppedDataURL);
-        } catch (error) {
-          console.error('[RAVEN] Cropping error:', error);
-          reject(error);
-        }
-      };
+  //         const croppedDataURL = croppedCanvas.toDataURL('image/png');
+  //         resolve(croppedDataURL);
+  //       } catch (error) {
+  //         console.error('[RAVEN] Cropping error:', error);
+  //         reject(error);
+  //       }
+  //     };
       
-      img.onerror = () => reject(new Error('Failed to load screenshot image'));
-      img.src = screenshotDataURL;
-    });
-  }
+  //     img.onerror = () => reject(new Error('Failed to load screenshot image'));
+  //     img.src = screenshotDataURL;
+  //   });
+  // }
 
+
+// function cropRegionByCoordinates(canvas, x, y, width, height) {
+//   const croppedCanvas = document.createElement('canvas');
+//   croppedCanvas.width = width;
+//   croppedCanvas.height = height;
+  
+//   const ctx = croppedCanvas.getContext('2d');
+//   ctx.drawImage(
+//     canvas,
+//     x, y, width, height,  // source rectangle
+//     0, 0, width, height   // destination rectangle
+//   );
+  
+//   return croppedCanvas;
+// }
   /**
    * Fetches backend data from Express server
    */
@@ -429,7 +503,7 @@
           <div style="color: #ffffff; font-weight: 600; font-size: 14px; margin-bottom: 10px;">Cropped Region (For OCR)</div>
           <img src="${testScreenshots.cropped}" style="width: 100%; border-radius: 8px; margin-bottom: 8px;">
           <div style="color: #cccccc; font-size: 11px;">
-            Coordinates: Y(${FACEBOOK_CROP.yStart}%-${FACEBOOK_CROP.yEnd}%), X(${FACEBOOK_CROP.xStart}%-${FACEBOOK_CROP.xEnd}%)
+            Coordinates: Y(${FACEBOOK_CROP.y}%-${FACEBOOK_CROP.y}%), X(${FACEBOOK_CROP.xStart}%-${FACEBOOK_CROP.xEnd}%)
           </div>
         </div>
 
