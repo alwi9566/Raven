@@ -207,7 +207,7 @@ app.post('/api/search', async (req, res) => {
 
         console.log('[SERVER] Searching Craigslist...');
         const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
-        console.log(craigstlistResults);
+        console.log(craigslistResults);
 
         // Clean up temp file
         fs.unlinkSync(tempPath);
