@@ -8,6 +8,8 @@
   const SERVER_URL = 'https://ravenextension.com:443/api/search'
   const TESTING_MODE = false // Set to true for testing screenshots only
 
+  const width = window.innerWidth;
+  const height = window.innerHeight;
   // Facebook Marketplace crop coordinates
   const FACEBOOK_CROP = {
     yStart: 5,
