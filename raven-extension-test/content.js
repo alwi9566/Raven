@@ -5,7 +5,7 @@
   let selectedListing = null
 
   // Express server URL (update this to match your server location)
-  const SERVER_URL = 'http://5.78.73.172:3000/api/search'
+  const SERVER_URL = 'https://ravenextension.com/api/search'
   const TESTING_MODE = false // Set to true for testing screenshots only
 
   // Facebook Marketplace crop coordinates
