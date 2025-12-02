@@ -106,6 +106,7 @@ async function craigslistSearch(title, price) {
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
     // Auto-scroll to load images
+    console.log("scrolling ebay...");
     await page.evaluate(async () => {
         await new Promise((resolve) => {
             let totalHeight = 0;
@@ -142,15 +143,15 @@ async function craigslistSearch(title, price) {
                 listing.querySelector('[class*="title"]') ||
                 listing.querySelector('a');
             const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
-
+            console.log(craigslist_title);
             const priceElement = listing.querySelector('.priceinfo') ||
                 listing.querySelector('[class*="price"]');
             const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
-
+            console.log(craigslist_price);
             const linkElement = listing.querySelector('a.posting-title') ||
                 listing.querySelector('a');
             const craigslist_url = linkElement ? linkElement.href : 'N/A';
-
+            console.log(craigslist_url);
             const imgElement = listing.querySelector('img');
             const craigslist_image = imgElement ? imgElement.src : 'N/A';
 
@@ -202,7 +203,7 @@ app.post('/api/search', async (req, res) => {
 
         console.log('[SERVER] Searching eBay...');
         const ebayResults = await ebaySearch(facebook_title, numericPrice, facebook_condition, 10);
-        console.log(ebayResults);
+        //console.log(ebayResults);
 
         console.log('[SERVER] Searching Craigslist...');
         const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
