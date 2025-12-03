@@ -529,7 +529,7 @@ function cropRegionByCoordinates(canvas, x, y, width, height) {
         <img src="${chrome.runtime.getURL("images/raven-logo.png")}" alt="RAVEN" class="raven-logo-img">
         <button class="raven-close" id="raven-close-btn">×</button>
       </div>
-
+      
       <div class="raven-tabs">
         <button class="raven-tab ${currentTab === "all" ? "active" : ""}" data-tab="all">All</button>
         <button class="raven-tab ${currentTab === "craigslist" ? "active" : ""}" data-tab="craigslist">Craigslist</button>
