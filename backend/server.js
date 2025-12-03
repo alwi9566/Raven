@@ -315,8 +315,7 @@ app.post('/api/search', async (req, res) => {
                     "ebay_condition": "Brand New",
                     "ebay_url": "https://www.ebay.com/itm/177603994343?_skw=Game+Boy+Advance+-&hash=item295a05e2e7:g:4yoAAeSwrTlpIofl&amdata=enc%3AAQAKAAAA8PeG5RIuIyokJHJy903%2F5UZ6d3uR2BgSAajrCDjVf0F5BO8FN6LRMCwIx2E0bgSkprCXolxovVIOBXm22M2xHZ35Ru3NuHZrVn0nRZk8i7xoOQdEI25ZWO%2BqOeOJliTmbIJvA1ZoLme8Pi3pT9C%2FzEOXg5Q5RE6AfKeecTV%2B13vDS77F2gLZEzx%2FVx2C9D2AFhk3w69Iq8zVVbQo1mjhd1m5McFCVWzoG093D7R0xEH1%2Bw1ta67wrK3TRNFsFnCfHI6l8zqtl728J%2BFFvos50ee28%2BpehV7H0PSgC1AhrmYFenillyTeu0Y7HR01Aua%2B%2Bg%3D%3D",
                     "ebay_imageUrl": "https://i.ebayimg.com/images/g/4yoAAeSwrTlpIofl/s-l225.jpg"
-                }
-                ]
+                }]
         const test = {
             success: true,
             extracted: {
