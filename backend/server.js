@@ -193,7 +193,63 @@ await browser.close();
 return listings;
 }
 
+//main api endpoint
+app.post('/api/search', async (req, res) => {
 
+        console.log('Server recieved request');
+        const { imageData } = req.body;
+
+        // if (!imageData) {
+        //     console.log('[SERVER] No image data provided');
+        //     return res.status(400).json({ error: 'No image data provided' });
+        // }
+
+        //save image to temp file
+        const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        const tempPath = path.join(__dirname, 'temp_screenshot.png');
+        fs.writeFileSync(tempPath, buffer);
+        
+        //call tesseract
+        console.log('\nExtracting text...');
+        const { facebook_title, facebook_price, facebook_condition } = await tesseractExtract(tempPath);
+
+        //console logs for debugging
+        console.log(`Title: ${facebook_title}`);
+        console.log(`Price: ${facebook_price}`);
+        console.log(`Condition: ${facebook_condition}`);
+
+        //remove dollar signs from price
+        const numericPrice = parseInt(facebook_price.replace(/\$/g, '').replace(/,/g, ''));
+
+        //call ebaySearch
+        console.log('\nSearching eBay...');
+        const ebayResults = await ebaySearch(facebook_title, numericPrice, facebook_condition, 10);
+        console.log(`eBay Results: ${ebayResults}`);
+
+        //call craigslistSearch
+        console.log('\nSearching Craigslist...');
+        const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
+        console.log(`Craigslist Results: ${craigslistResults}`);
+
+        //delete temp image
+        fs.unlinkSync(tempPath);
+
+        //return results as json
+        res.json({
+            success: true,
+            extracted: {
+                title: facebook_title,
+                price: facebook_price,
+                condition: facebook_condition
+            },
+            results: {
+                ebay: ebayResults,
+                craigslist: craigslistResults
+            }
+        });
+    
+});
 // Separate endpoint for just OCR extraction (might be able to delete!!!!!!!!!!!!)
 // app.post('/api/extract', async (req, res) => {
 //     try {
