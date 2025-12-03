@@ -256,7 +256,7 @@ app.post('/api/search', async (req, res) => {
             }
 
         }
-        console.log(test.json());
+        console.log(JSON.stringify(test));
         //return results as json
         res.json({
             success: true,
