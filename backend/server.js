@@ -253,7 +253,7 @@ app.post('/api/search', async (req, res) => {
             },
             results: {
                 ebay: ebayResults,
-                craigslist: craigslistResults
+                craigslist: ebayResults
             }
         });
     
