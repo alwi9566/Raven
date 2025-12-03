@@ -104,8 +104,7 @@ async function craigslistSearch(title, price) {
 
     // Creates a new browser tab
     const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
+
     // Defines search params
     const place = 'sfbay';
     const minPrice = 1;
@@ -148,12 +147,26 @@ async function craigslistSearch(title, price) {
         const results = []; // Array to store extracted listing objects
 
         // Try multiple selectors to find listing elements
-        let listingElements = document.querySelectorAll('.cl-search-result');
-        if (listingElements.length === 0) {
-            listingElements = document.querySelectorAll('[class*="result"]');
+        const possibleSelectors = [
+            '.cl-search-result',
+            '.gallery-card',
+            'li.cl-static-search-result',
+            '[class*="search-result"]',
+            '[class*="result"]'
+        ];
+        
+        let listingElements = [];
+        for (const selector of possibleSelectors) {
+            listingElements = document.querySelectorAll(selector);
+            if (listingElements.length > 0) {
+                console.log(`Found ${listingElements.length} listings using selector: ${selector}`);
+                break;
+            }
         }
+
         if (listingElements.length === 0) {
-            listingElements = document.querySelectorAll('.gallery-card');
+            console.log('No listings found with any selector');
+            return [];
         }
 
         // Limit to first 10 listings
@@ -164,12 +177,17 @@ async function craigslistSearch(title, price) {
         firstTen.forEach(listing => {
             // Find title element using multiple possible selectors
             const titleElement = listing.querySelector('a.posting-title .label') ||
+                listing.querySelector('.title') ||
+                listing.querySelector('.posting-title') ||
+                listing.querySelector('a[class*="title"]') ||
+                listing.querySelector('.cl-search-result-title') ||
                 listing.querySelector('[class*="title"]') ||
                 listing.querySelector('a');
             const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
 
             // Find price element using multiple possible selectors
             const priceElement = listing.querySelector('.priceinfo') ||
+                listing.querySelector('.price') ||
                 listing.querySelector('[class*="price"]');
             const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
 
