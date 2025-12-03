@@ -382,10 +382,10 @@ function cropRegionByCoordinates(canvas, x, y, width, height) {
 
     // Extract Craigslist listings
     const craigslistListings = (serverData.results?.craigslist || []).map(item => ({
-      image: item.craigslist_image || 'https://via.placeholder.com/150',
-      price: item.craigslist_price || 'N/A',
-      title: item.craigslist_title || 'Untitled',
-      url: item.craigslist_url || '#',
+      image: item.ebay_imageUrl || 'https://via.placeholder.com/150',
+      price: item.ebay_price || 'N/A',
+      title: item.ebay_title || 'Untitled',
+      url: item.ebay_url || '#',
       platform: 'craigslist'
     }));
 
