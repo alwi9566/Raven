@@ -252,7 +252,7 @@ app.post('/api/search', async (req, res) => {
             },
             results: {
                 ebay: ebayResults,
-                craigslist: ebayResults
+                craigslist: craigslist_placeholder
             }
 
         }
@@ -329,7 +329,7 @@ app.post('/api/search', async (req, res) => {
                     "ebay_imageUrl": "https://i.ebayimg.com/images/g/4yoAAeSwrTlpIofl/s-l225.jpg"
                 }
                 ]
-                
+
         console.log(JSON.stringify(test, null, 2));
         //return results as json
         res.json({
