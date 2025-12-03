@@ -114,7 +114,8 @@ async function craigslistSearch(title, price) {
     const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
 
     // Navigate to the search URL and wait for network activity to settle
-    console.log(await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 }));
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    console.log(CdpHTTPResponse);
 
     // Auto-scroll to load images
     await page.evaluate(async () => {
