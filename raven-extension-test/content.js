@@ -379,7 +379,6 @@ function cropRegionByCoordinates(canvas, x, y, width, height) {
       platform: 'ebay'
     }));
 
-    // Extract Craigslist listings
     const craigslistListings = (serverData.results?.craigslist || []).map(item => ({
       image: item.craigslist_image || 'https://via.placeholder.com/150',
       price: item.craigslist_price || 'N/A',
@@ -410,6 +409,11 @@ function cropRegionByCoordinates(canvas, x, y, width, height) {
         avgPrice: calculateAvgPrice(allListings),
         listings: allListings
       },
+      // craigslist: {
+      //   count: ebayListings.length,
+      //   avgPrice: calculateAvgPrice(ebayListings),
+      //   listings: ebayListings
+      // },
       craigslist: {
         count: craigslistListings.length,
         avgPrice: calculateAvgPrice(craigslistListings),
