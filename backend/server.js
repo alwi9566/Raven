@@ -237,7 +237,7 @@ app.post('/api/search', async (req, res) => {
 
         //call craigslistSearch
         console.log('\nSearching Craigslist...');
-        const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
+        //const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
         console.log(`Craigslist Results: ${craigslistResults.json}`);
 
         //delete temp image
