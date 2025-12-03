@@ -95,160 +95,104 @@ async function ebaySearch(title, price, condition, limit) {
 
 // Craigslist search function
 async function craigslistSearch(title, price) {
-    
-    // Launch a headless Chromium browser instance with security flags
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+
+// Launch a headless Chromium browser instance with security flags
+const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+});
+
+// Creates a new browser tab
+const page = await browser.newPage();
+
+// Defines search params
+const place = 'sfbay';
+const minPrice = 1;
+const maxPrice = price + 1000;
+
+// Construct the Craigslist search URL
+const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
+
+// Navigate to the search URL and wait for network activity to settle
+await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+
+// Auto-scroll to load images
+await page.evaluate(async () => {
+    await new Promise((resolve) => {
+        let totalHeight = 0; // Track total scroll distance
+        const distance = 100; // Scroll 100px at a time
+        const timer = setInterval(() => {
+            window.scrollBy(0, distance);
+            totalHeight += distance;
+
+            // Stop scrolling after reaching 2000px
+            if (totalHeight >= 2000) {
+                clearInterval(timer);
+                resolve();
+            }
+        }, 100);
     });
+});
 
-    // Creates a new browser tab
-    const page = await browser.newPage();
+// Wait an additional 2 seconds to ensure images finish loading
+await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Defines search 
-    const place = 'sfbay';
-    const minPrice = 1;
-    const maxPrice = price + 1000;
+// Extract listing data from the page DOM
+const listings = await page.evaluate(() => {
+    const results = []; // Array to store extracted listing objects
 
-    const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
+    // Try multiple selectors to find listing elements
+    let listingElements = document.querySelectorAll('.cl-search-result');
+    if (listingElements.length === 0) {
+        listingElements = document.querySelectorAll('[class*="result"]');
+    }
+    if (listingElements.length === 0) {
+        listingElements = document.querySelectorAll('.gallery-card');
+    }
 
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    // Limit to first 10 listings
+    const firstTen = Array.from(listingElements).slice(0, 10);
 
-    //scroll to load lazy images
-    console.log("Scrolling Craigslist...");
-    await page.evaluate(async () => {
-        await new Promise((resolve) => {
-            let totalHeight = 0;
-            const distance = 100;
-            const timer = setInterval(() => {
-                window.scrollBy(0, distance);
-                totalHeight += distance;
+    // Loop through each listing and extract relevant data
+    firstTen.forEach(listing => {
+        // Find title element using multiple possible selectors
+        const titleElement = listing.querySelector('a.posting-title .label') ||
+            listing.querySelector('[class*="title"]') ||
+            listing.querySelector('a');
+        const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
 
-                if (totalHeight >= 2000) {
-                    clearInterval(timer);
-                    resolve();
-                }
-            }, 100);
+        // Find price element using multiple possible selectors
+        const priceElement = listing.querySelector('.priceinfo') ||
+            listing.querySelector('[class*="price"]');
+        const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
+
+        // Find link element to the full listing
+        const linkElement = listing.querySelector('a.posting-title') ||
+            listing.querySelector('a');
+        const craigslist_url = linkElement ? linkElement.href : 'N/A';
+
+        // Find image element
+        const imgElement = listing.querySelector('img');
+        const craigslist_image = imgElement ? imgElement.src : 'N/A';
+
+        // Add extracted data to results array
+        results.push({
+            craigslist_title,
+            craigslist_price,
+            craigslist_image,
+            craigslist_url
         });
     });
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    return results;
+});
 
-    const listings = await page.evaluate(() => {
-        const results = [];
+await browser.close();
 
-        let listingElements = document.querySelectorAll('.cl-search-result');
-        if (listingElements.length === 0) {
-            listingElements = document.querySelectorAll('[class*="result"]');
-        }
-        if (listingElements.length === 0) {
-            listingElements = document.querySelectorAll('.gallery-card');
-        }
-
-        const firstTen = Array.from(listingElements).slice(0, 10);
-
-        firstTen.forEach(listing => {
-            const titleElement = listing.querySelector('a.posting-title .label') ||
-                listing.querySelector('[class*="title"]') ||
-                listing.querySelector('a');
-            const craigslist_title = titleElement ? titleElement.textContent.trim() : 'N/A';
-            console.log(craigslist_title);
-            const priceElement = listing.querySelector('.priceinfo') ||
-                listing.querySelector('[class*="price"]');
-            const craigslist_price = priceElement ? priceElement.textContent.trim() : 'N/A';
-            console.log(craigslist_price);
-            const linkElement = listing.querySelector('a.posting-title') ||
-                listing.querySelector('a');
-            const craigslist_url = linkElement ? linkElement.href : 'N/A';
-            console.log(craigslist_url);
-            const imgElement = listing.querySelector('img');
-            const craigslist_image = imgElement ? imgElement.src : 'N/A';
-
-            results.push({
-                craigslist_title,
-                craigslist_price,
-                craigslist_image,
-                craigslist_url
-            });
-        });
-
-        return results;
-    });
-
-    await browser.close();
-    console.log(`Listings: ${listings}`);
-    return listings;
+// Return the array of listing objects
+return listings;
 }
 
-//check if server responds
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Server is online' });
-});
-
-//main api endpoint
-app.post('/api/search', async (req, res) => {
-    try {
-        console.log('Server recieved request');
-        const { imageData } = req.body;
-
-        // if (!imageData) {
-        //     console.log('[SERVER] No image data provided');
-        //     return res.status(400).json({ error: 'No image data provided' });
-        // }
-
-        //save image to temp file
-        const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-        const tempPath = path.join(__dirname, 'temp_screenshot.png');
-        fs.writeFileSync(tempPath, buffer);
-        
-        //call tesseract
-        console.log('\nExtracting text...');
-        const { facebook_title, facebook_price, facebook_condition } = await tesseractExtract(tempPath);
-
-        //console logs for debugging
-        console.log(`Title: ${facebook_title}`);
-        console.log(`Price: ${facebook_price}`);
-        console.log(`Condition: ${facebook_condition}`);
-
-        //remove dollar signs from price
-        const numericPrice = parseInt(facebook_price.replace(/\$/g, '').replace(/,/g, ''));
-
-        //call ebaySearch
-        console.log('\nSearching eBay...');
-        const ebayResults = await ebaySearch(facebook_title, numericPrice, facebook_condition, 10);
-        console.log(`eBay Results: ${ebayResults}`);
-
-        //call craigslistSearch
-        console.log('\nSearching Craigslist...');
-        const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
-        console.log(`Craigslist Results: ${craigslistResults}`);
-
-        //delete temp image
-        fs.unlinkSync(tempPath);
-
-        //return results as json
-        res.json({
-            success: true,
-            extracted: {
-                title: facebook_title,
-                price: facebook_price,
-                condition: facebook_condition
-            },
-            results: {
-                ebay: ebayResults,
-                craigslist: craigslistResults
-            }
-        });
-
-    } catch (error) {
-        console.error('[SERVER] Error processing search:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
 
 // Separate endpoint for just OCR extraction (might be able to delete!!!!!!!!!!!!)
 // app.post('/api/extract', async (req, res) => {
