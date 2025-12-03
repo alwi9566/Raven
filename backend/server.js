@@ -243,19 +243,7 @@ app.post('/api/search', async (req, res) => {
         //delete temp image
         fs.unlinkSync(tempPath);
 
-        const test = {
-            success: true,
-            extracted: {
-                title: facebook_title,
-                price: facebook_price,
-                condition: facebook_condition
-            },
-            results: {
-                ebay: ebayResults,
-                craigslist: craigslist_placeholder
-            }
 
-        }
 
         const craigslist_placeholder = [
                 {
@@ -329,7 +317,19 @@ app.post('/api/search', async (req, res) => {
                     "ebay_imageUrl": "https://i.ebayimg.com/images/g/4yoAAeSwrTlpIofl/s-l225.jpg"
                 }
                 ]
+        const test = {
+            success: true,
+            extracted: {
+                title: facebook_title,
+                price: facebook_price,
+                condition: facebook_condition
+            },
+            results: {
+                ebay: ebayResults,
+                craigslist: craigslist_placeholder
+            }
 
+        }
         console.log(JSON.stringify(test, null, 2));
         //return results as json
         res.json({
