@@ -233,7 +233,7 @@ app.post('/api/search', async (req, res) => {
         //call ebaySearch
         console.log('\nSearching eBay...');
         const ebayResults = await ebaySearch(facebook_title, numericPrice, facebook_condition, 10);
-        console.log(`eBay Results: ${ebayResults}`);
+        console.log(`eBay Results: ${ebayResults.json}`);
 
         //call craigslistSearch
         console.log('\nSearching Craigslist...');
