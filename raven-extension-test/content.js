@@ -1,3 +1,4 @@
+
  ;(() => {
   let overlay = null
   let currentTab = "all"
@@ -379,6 +380,7 @@ function cropRegionByCoordinates(canvas, x, y, width, height) {
       platform: 'ebay'
     }));
 
+    // Extract Craigslist listings
     const craigslistListings = (serverData.results?.craigslist || []).map(item => ({
       image: item.craigslist_image || 'https://via.placeholder.com/150',
       price: item.craigslist_price || 'N/A',
@@ -409,11 +411,6 @@ function cropRegionByCoordinates(canvas, x, y, width, height) {
         avgPrice: calculateAvgPrice(allListings),
         listings: allListings
       },
-      // craigslist: {
-      //   count: ebayListings.length,
-      //   avgPrice: calculateAvgPrice(ebayListings),
-      //   listings: ebayListings
-      // },
       craigslist: {
         count: craigslistListings.length,
         avgPrice: calculateAvgPrice(craigslistListings),
@@ -533,7 +530,7 @@ function cropRegionByCoordinates(canvas, x, y, width, height) {
         <img src="${chrome.runtime.getURL("images/raven-logo.png")}" alt="RAVEN" class="raven-logo-img">
         <button class="raven-close" id="raven-close-btn">×</button>
       </div>
-      
+
       <div class="raven-tabs">
         <button class="raven-tab ${currentTab === "all" ? "active" : ""}" data-tab="all">All</button>
         <button class="raven-tab ${currentTab === "craigslist" ? "active" : ""}" data-tab="craigslist">Craigslist</button>
