@@ -207,11 +207,6 @@ app.post('/api/search', async (req, res) => {
         console.log('Server recieved request');
         const { imageData } = req.body;
 
-        // if (!imageData) {
-        //     console.log('[SERVER] No image data provided');
-        //     return res.status(400).json({ error: 'No image data provided' });
-        // }
-
         //save image to temp file
         const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
@@ -235,14 +230,8 @@ app.post('/api/search', async (req, res) => {
         const ebayResults = await ebaySearch(facebook_title, numericPrice, facebook_condition, 10);
         console.log(`eBay Results: ${ebayResults.json}`);
 
-        //call craigslistSearch
-        console.log('\nSearching Craigslist...');
-        //const craigslistResults = await craigslistSearch(facebook_title, numericPrice);
-        //console.log(`Craigslist Results: ${craigslistResults.json}`);
-
         //delete temp image
         fs.unlinkSync(tempPath);
-
 
 
         const craigslist_placeholder = [
@@ -316,20 +305,7 @@ app.post('/api/search', async (req, res) => {
                     "ebay_url": "https://www.ebay.com/itm/177603994343?_skw=Game+Boy+Advance+-&hash=item295a05e2e7:g:4yoAAeSwrTlpIofl&amdata=enc%3AAQAKAAAA8PeG5RIuIyokJHJy903%2F5UZ6d3uR2BgSAajrCDjVf0F5BO8FN6LRMCwIx2E0bgSkprCXolxovVIOBXm22M2xHZ35Ru3NuHZrVn0nRZk8i7xoOQdEI25ZWO%2BqOeOJliTmbIJvA1ZoLme8Pi3pT9C%2FzEOXg5Q5RE6AfKeecTV%2B13vDS77F2gLZEzx%2FVx2C9D2AFhk3w69Iq8zVVbQo1mjhd1m5McFCVWzoG093D7R0xEH1%2Bw1ta67wrK3TRNFsFnCfHI6l8zqtl728J%2BFFvos50ee28%2BpehV7H0PSgC1AhrmYFenillyTeu0Y7HR01Aua%2B%2Bg%3D%3D",
                     "ebay_imageUrl": "https://i.ebayimg.com/images/g/4yoAAeSwrTlpIofl/s-l225.jpg"
                 }]
-        const test = {
-            success: true,
-            extracted: {
-                title: facebook_title,
-                price: facebook_price,
-                condition: facebook_condition
-            },
-            results: {
-                ebay: ebayResults,
-                craigslist: craigslist_placeholder
-            }
 
-        }
-        //console.log(JSON.stringify(test, null, 2));
         //return results as json
         res.json({
             success: true,
@@ -346,36 +322,6 @@ app.post('/api/search', async (req, res) => {
         
     
 });
-// Separate endpoint for just OCR extraction (might be able to delete!!!!!!!!!!!!)
-// app.post('/api/extract', async (req, res) => {
-//     try {
-//         const { imageData } = req.body;
-
-//         if (!imageData) {
-//             return res.status(400).json({ error: 'No image data provided' });
-//         }
-
-//         const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-//         const buffer = Buffer.from(base64Data, 'base64');
-//         const tempPath = path.join(__dirname, 'temp_screenshot.png');
-//         fs.writeFileSync(tempPath, buffer);
-
-//         const extracted = await tesseractExtract(tempPath);
-//         fs.unlinkSync(tempPath);
-
-//         res.json({
-//             success: true,
-//             extracted
-//         });
-
-//     } catch (error) {
-//         console.error('[SERVER] Error extracting text:', error);
-//         res.status(500).json({
-//             success: false,
-//             error: error.message
-//         });
-//     }
-// });
 
 // SSL Certificate Configuration
 const sslOptions = {
