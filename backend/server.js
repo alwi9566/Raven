@@ -243,6 +243,20 @@ app.post('/api/search', async (req, res) => {
         //delete temp image
         fs.unlinkSync(tempPath);
 
+        const test = {
+            success: true,
+            extracted: {
+                title: facebook_title,
+                price: facebook_price,
+                condition: facebook_condition
+            },
+            results: {
+                ebay: ebayResults,
+                craigslist: ebayResults
+            }
+
+        }
+        console.log(test);
         //return results as json
         res.json({
             success: true,
@@ -256,6 +270,7 @@ app.post('/api/search', async (req, res) => {
                 craigslist: ebayResults
             }
         });
+        
     
 });
 // Separate endpoint for just OCR extraction (might be able to delete!!!!!!!!!!!!)
