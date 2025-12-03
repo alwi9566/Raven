@@ -256,6 +256,80 @@ app.post('/api/search', async (req, res) => {
             }
 
         }
+
+        const craigslist_placeholder = [
+                {
+                    "ebay_title": "Nintendo Game Boy Advance GBA Backlight V5 IPS LCD System PICK YOUR COLOR",
+                    "ebay_price": "219.95 USD",
+                    "ebay_condition": "Excellent - Refurbished",
+                    "ebay_url": "https://www.ebay.com/itm/195489317361?_skw=Game+Boy+Advance+-&hash=item2d841241f1:g:C0cAAOSwU-plNqqw&amdata=enc%3AAQAKAAAA8PeG5RIuIyokJHJy903%2F5UZbQC2K4OQMVjTkm2Ln%2B2Brdlc18e%2B8Pw4EevISFti2OJUamtQZC6s5F7y3anU0OOMpCVLRYMmec9nl0evRCc%2BCsqWpcFTPzBnkaOSNvDw0Ki%2FyWQ0wArOX5IitnIP93oIoXW0%2FAT%2Bk8FY3%2FY70g8iLDyXHaCXw4%2Bx%2FJsciGsk4VuyNgnjjFsTqrRsun5wwvgNQSUWyLEiFS6fBN9BOO0vmyBWc04XDSMX8Vt%2F3sj%2FoLcqT%2Fyspk66ccp%2FT1jcbbwMU21W7%2B5Iw3%2FmQFTx4X545TKIh1sYb16QlCNFXS013IQ%3D%3D",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/C0cAAOSwU-plNqqw/s-l225.jpg"
+                },
+                {
+                    "ebay_title": "Nintendo Game Boy Advance Console System Cleaned Tested New Indigo CaseRenewed p",
+                    "ebay_price": "99.99 USD",
+                    "ebay_condition": "Open box",
+                    "ebay_url": "https://www.ebay.com/itm/267492203658?_skw=Game+Boy+Advance+-&hash=item3e47c71c8a:g:3xkAAeSwDXRpJ68a&amdata=enc%3AAQAKAAAA8PeG5RIuIyokJHJy903%2F5UarlBIEPXpipvCbwgd%2FHfLB5eiGP3Kw%2FhV0sCH5y%2FRnI7iwfvKKFebbRO5%2FEm9jpcTFNLADngpyWPYcEzWvEzq%2FKdzabBtFLe0bHWZYQf2TqRKFURg77Sjka3mxf8DbEHWc9Mn9eT%2Byf7rf%2Bbl8vxCYl%2B7TbMcAzNutepuYmGWOzhaHqin8B2G6lgN%2FNEMHgPE8Ne6EyS0RFCticodFvz9DPw5iN6LeeGYbVKeBy5l4GQ8TEGFQiC%2FPIKx01ExK90lzQrLlJnfNYHhsls97ku68nJqee2RJezYSyZIVdJqwnQ%3D%3D",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/3xkAAeSwDXRpJ68a/s-l225.jpg"
+                },
+                {
+                    "ebay_title": "Pokémon: Emerald Version (Game Boy Advance, 2004) GBA Game Cartridge - New",
+                    "ebay_price": "59.99 USD",
+                    "ebay_condition": "Brand New",
+                    "ebay_url": "https://www.ebay.com/itm/177603985213?_skw=Game+Boy+Advance+-&hash=item295a05bf3d:g:cg4AAeSwXZ9pIoYc&amdata=enc%3AAQAKAAAA8PeG5RIuIyokJHJy903%2F5Ubhpxcm02qdtFTbSoD3oguCncrsFzizVgWpCdkzbW6X%2FMhnXk66BxK19GL3loqUsHMkMRPEApb0%2F%2BCDaeuOE2CDIgg0C31tRjmjfNl12B6N21FQaq0LoGsiPCtQrSY64BRJg5sM%2FVm5puqWSwmByvzdQnCYoRGQ7yKNglkiAMU4cMdzDEuE6Yx3dB%2Fo%2FTG6YOnDfyImESfiC8FvkWoRVdbQKq2ua0dFLIhtJh0aY28Of6sZZkxqlMPKyfEWENcOmeI%2BJDvn0hgs6EPUBP5KX2HI2AYIUFjpEhITG4XKrQmHmQ%3D%3D",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/cg4AAeSwXZ9pIoYc/s-l225.jpg"
+                },
+                {
+                    "ebay_title": "Nintendo Game Boy Advance SP 101 System GBA SP IPS LCD Backlit PICK YOUR COLOR!",
+                    "ebay_price": "229.95 USD",
+                    "ebay_condition": "Excellent - Refurbished",
+                    "ebay_url": "https://www.ebay.com/itm/195489367990?_skw=Game+Boy+Advance+-&hash=item2d841307b6:g:6Z8AAOSwQRhlMZ9R&amdata=enc%3AAQAKAAAA8PeG5RIuIyokJHJy903%2F5UZfoX4U4%2Bs2mi97ntmVRRIU87oCUWatRJAC3zEeBS2%2FMz%2FYcWHQfRo0Z%2BMwycpSqfxwuAZ66nNdZTmXxGcS91dq0wTl2tbFyeNSf2H%2Bel47aOi%2BV8f3lq7Q83%2BuVDuPGSJdZthbVR1WvAbn%2FcOLc27pUSBojaKJobiRgneBMGWzCX8pJ02OvMLrzws1crG3GExfFKeCbTLrno1IpvtIK7OLsqMfe73zBjhrjxZLH8PJ0GWPjELPbaLtlJ%2FrB0A5TwDg2Aozb7zM96jf03cCzaW54pGgSYv9oruhx6suOyg3cw%3D%3D",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/6Z8AAOSwQRhlMZ9R/s-l225.jpg"
+                },
+                {
+                    "ebay_title": "Nintendo Game Boy Advance SP with Charger | AGS-101 or IPS V2 | Back-lit Screen",
+                    "ebay_price": "199.95 USD",
+                    "ebay_condition": "Excellent - Refurbished",
+                    "ebay_url": "https://www.ebay.com/itm/203011552939?_skw=Game+Boy+Advance+-&hash=item2f446e76ab:g:L18AAOSwR5dilUtJ",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/L18AAOSwR5dilUtJ/s-l225.jpg"
+                },
+                {
+                    "ebay_title": "Nintendo Game Boy Advance Console System Cleaned Tested New Indigo CaseRenewed",
+                    "ebay_price": "99.89 USD",
+                    "ebay_condition": "Open box",
+                    "ebay_url": "https://www.ebay.com/itm/257159414807?_skw=Game+Boy+Advance+-&hash=item3bdfe54417:g:c7IAAeSwROFo8L56",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/c7IAAeSwROFo8L56/s-l225.jpg"
+                },
+                {
+                    "ebay_title": "Nintendo GameBoy Advance (Glacier Clear AGB-001) Handheld System Authentic Works",
+                    "ebay_price": "79.99 USD",
+                    "ebay_condition": "Used",
+                    "ebay_url": "https://www.ebay.com/itm/389322111091?_skw=Game+Boy+Advance+-&hash=item5aa567f873:g:NNUAAeSwq49pLyAw",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/NNUAAeSwq49pLyAw/s-l225.jpg"
+                },
+                {
+                    "ebay_title": "Nintendo Game Boy Advance GBA Authentic *Pick Your Game* Cart Only Tested",
+                    "ebay_price": "29.99 USD",
+                    "ebay_condition": "Good",
+                    "ebay_url": "https://www.ebay.com/itm/295813495508?_skw=Game+Boy+Advance+-&hash=item44dfdbbad4:g:UL8AAOSw9atjg562",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/UL8AAOSw9atjg562/s-l225.jpg"
+                },
+                {
+                    "ebay_title": "Pokémon: FireRed Version (Game Boy Advance, 2003) GBA Game Cartridge - New",
+                    "ebay_price": "59.99 USD",
+                    "ebay_condition": "Brand New",
+                    "ebay_url": "https://www.ebay.com/itm/177547948893?_skw=Game+Boy+Advance+-&hash=item2956aeb35d:g:AmkAAeSwIhJpB0uD&amdata=enc%3AAQAKAAAA8PeG5RIuIyokJHJy903%2F5UZw%2FCYTu4Q%2Ftumv6bRm1AfY2t3e68rFf2TZ24oCWKUcyTsOxyAcn2LEqNtlac%2FKrBn2fKLYl3Sn0triWhl42yzHAmeo%2FeZjgs7ejRxjfDfSSsLG6Fm302MOV1TXhWwJZZz0348GcZaCIEvwr84%2Fe7QnBw8TFrIGvxScDYYH5oQNu3HydUyBVp5uTouuUau9AX%2FeKxSo%2FTQK7BsFaARmlivyE52VYJ5cPgN5OWRjWJ84YGKcR42%2B%2FdmXlx87ibgiNlVR0SGb%2BWQknYhQwBCRO0ePrqu5aJFmflQOD7eFxJtTKg%3D%3D",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/AmkAAeSwIhJpB0uD/s-l225.jpg"
+                },
+                {
+                    "ebay_title": "Pokémon: LeafGreen Version (Game Boy Advance, 2004) GBA Game Cartridge - New",
+                    "ebay_price": "59.99 USD",
+                    "ebay_condition": "Brand New",
+                    "ebay_url": "https://www.ebay.com/itm/177603994343?_skw=Game+Boy+Advance+-&hash=item295a05e2e7:g:4yoAAeSwrTlpIofl&amdata=enc%3AAQAKAAAA8PeG5RIuIyokJHJy903%2F5UZ6d3uR2BgSAajrCDjVf0F5BO8FN6LRMCwIx2E0bgSkprCXolxovVIOBXm22M2xHZ35Ru3NuHZrVn0nRZk8i7xoOQdEI25ZWO%2BqOeOJliTmbIJvA1ZoLme8Pi3pT9C%2FzEOXg5Q5RE6AfKeecTV%2B13vDS77F2gLZEzx%2FVx2C9D2AFhk3w69Iq8zVVbQo1mjhd1m5McFCVWzoG093D7R0xEH1%2Bw1ta67wrK3TRNFsFnCfHI6l8zqtl728J%2BFFvos50ee28%2BpehV7H0PSgC1AhrmYFenillyTeu0Y7HR01Aua%2B%2Bg%3D%3D",
+                    "ebay_imageUrl": "https://i.ebayimg.com/images/g/4yoAAeSwrTlpIofl/s-l225.jpg"
+                }
+                ]
+                
         console.log(JSON.stringify(test, null, 2));
         //return results as json
         res.json({
@@ -267,7 +341,7 @@ app.post('/api/search', async (req, res) => {
             },
             results: {
                 ebay: ebayResults,
-                craigslist: ebayResults
+                craigslist: craigslist_placeholder
             }
         });
         
