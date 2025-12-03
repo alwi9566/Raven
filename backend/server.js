@@ -98,7 +98,7 @@ async function craigslistSearch(title, price) {
 
     // Launch a headless Chromium browser instance with security flags
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
