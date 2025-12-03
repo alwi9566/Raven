@@ -114,12 +114,14 @@ async function craigslistSearch(title, price) {
     const url = `https://${place}.craigslist.org/search/sss?query=${encodeURIComponent(title)}&min_price=${minPrice}&max_price=${maxPrice}#search=1~gallery~0~0`;
 
     // Navigate to the search URL and wait for network activity to settle
+    console.log('Navigating to search URL...');
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-    console.log(CdpHTTPResponse);
+
 
     // Auto-scroll to load images
     await page.evaluate(async () => {
         await new Promise((resolve) => {
+            console.log("Scrolling...")
             let totalHeight = 0; // Track total scroll distance
             const distance = 100; // Scroll 100px at a time
             const timer = setInterval(() => {
@@ -129,6 +131,7 @@ async function craigslistSearch(title, price) {
                 // Stop scrolling after reaching 2000px
                 if (totalHeight >= 2000) {
                     clearInterval(timer);
+                    console.log("Finished scrolling...");
                     resolve();
                 }
             }, 100);
@@ -140,6 +143,7 @@ async function craigslistSearch(title, price) {
 
     // Extract listing data from the page DOM
     const listings = await page.evaluate(() => {
+        console.log('Extracting Craigslist listing data...');
         const results = []; // Array to store extracted listing objects
 
         // Try multiple selectors to find listing elements
@@ -155,6 +159,7 @@ async function craigslistSearch(title, price) {
         const firstTen = Array.from(listingElements).slice(0, 10);
 
         // Loop through each listing and extract relevant data
+        console.log('Looping through listings...');
         firstTen.forEach(listing => {
             // Find title element using multiple possible selectors
             const titleElement = listing.querySelector('a.posting-title .label') ||
@@ -183,8 +188,9 @@ async function craigslistSearch(title, price) {
                 craigslist_image,
                 craigslist_url
             });
+            console.log('Pushed results...');
         });
-
+        console.log('\nFinished Craigslist extraction!');
         return results;
     });
 
